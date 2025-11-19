@@ -1,0 +1,30 @@
+header:
+  version: 11
+
+# What we build (same as your initial manual setup)
+machine: qemux86-64
+distro: poky
+target: core-image-minimal
+
+repos:
+  poky:
+    # Option A: kas clones poky from upstream
+    url: https://git.yoctoproject.org/poky
+    refspec: kirkstone
+    layers:
+      meta:
+      meta-poky:
+      meta-yocto-bsp:
+
+# You can keep these minimal to stay as close as possible to your original build.
+# They just keep downloads and sstate outside build/ so the repo stays clean.
+local_conf_header:
+  local_conf_header: |
+    # Keep downloads and sstate outside the build directory
+    DL_DIR ?= "${TOPDIR}/../downloads"
+    SSTATE_DIR ?= "${TOPDIR}/../sstate-cache"
+    EXTRA_IMAGE_FEATURES += " debug-tweaks"
+
+bblayers_conf_header:
+  bblayers_conf_header: |
+    # No extra BBLAYERS tweaks for now

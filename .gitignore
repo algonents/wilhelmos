@@ -1,0 +1,30 @@
+poky/
+# --- Yocto output directories ---
+build/
+downloads/
+sstate-cache/
+tmp*/
+cache/
+
+# --- Yocto deploy artifacts ---
+*.wic
+*.wic.*
+*.bmap
+*.ext4
+*.cpio*
+*.bzImage
+*.tar.*
+*.ipk
+*.rpm
+*.deb
+
+# --- Logs ---
+*.log
+
+# --- KAS ---
+.kas_shell_history
+
+# --- Editor / OS junk ---
+.DS_Store
+.vscode/
+.idea/
