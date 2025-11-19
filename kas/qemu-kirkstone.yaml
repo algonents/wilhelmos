@@ -2,7 +2,7 @@ header:
   version: 11
 
 machine: qemux86-64
-distro: poky
+distro: wilhelmos
 target: wilhelmos-image-base
 
 repos:
