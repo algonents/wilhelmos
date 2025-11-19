@@ -1,41 +1,34 @@
 header:
   version: 11
 
-# What we build (same as your initial manual setup)
 machine: qemux86-64
 distro: poky
-target: core-image-minimal
+target: wilhelmos-image-base
 
 repos:
   poky:
-    # Kas clones poky from upstream
     url: https://git.yoctoproject.org/poky
     refspec: kirkstone
     layers:
       meta:
       meta-poky:
       meta-yocto-bsp:
+
   meta-openembedded:
     url: https://git.openembedded.org/meta-openembedded
     refspec: kirkstone
     layers:
       meta-oe:
 
-# These fragments are merged into build/conf/local.conf by kas
 local_conf_header:
   base: |
-    # Keep downloads and sstate outside the build directory
     DL_DIR ?= "${TOPDIR}/../downloads"
     SSTATE_DIR ?= "${TOPDIR}/../sstate-cache"
 
-    # Dev-only root access (disable for production)
     EXTRA_IMAGE_FEATURES += " debug-tweaks"
 
-  tools: |
-    # Extra tools for experimentation
-    IMAGE_INSTALL:append = " nano"
-
-# These fragments are merged into build/conf/bblayers.conf by kas
 bblayers_conf_header:
   base: |
-    # No custom BBLAYERS overrides; all layers come from 'repos' above.
+    BBLAYERS:append = " \
+      ${TOPDIR}/../meta-wilhelmos \
+    "
