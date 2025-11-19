@@ -1,14 +1,12 @@
-# WilhelmOS – Yocto QEMU Minimal (kas-based)
+# WilhelmOS – QEMU Minimal (kas-based)
 
-This repository defines how to build a minimal Yocto-based image for
+This repository defines how to build a minimal image for
 **WilhelmOS**, currently targeting **QEMU x86_64** using **kas**.
 
-The goal of this setup is to *reproduce* the initial manual Yocto build:
-
 - `MACHINE = "qemux86-64"`
-- `DISTRO = "poky"`
-- `target = core-image-minimal`
-- branch: `kirkstone`
+- `DISTRO = "wilhelmos"`
+- `target = wilhelmos-image-base`
+-  branch: `kirkstone`
 
 ## Prerequisites
 
