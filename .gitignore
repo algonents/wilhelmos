@@ -1,4 +1,5 @@
 poky/
+meta-openembedded/
 # --- Yocto output directories ---
 build/
 downloads/
