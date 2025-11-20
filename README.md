@@ -1,4 +1,4 @@
-# WilhelmOS – QEMU Minimal (kas-based)
+# WilhelmOS
 
 This repository defines how to build a minimal image for
 **WilhelmOS**, currently targeting **QEMU x86_64** using **kas**.
