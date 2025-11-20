@@ -1,0 +1,10 @@
+# UEFI-bootable GPT disk image for generic x86-64 PCs (ThinkPad, HP, etc.)
+
+# EFI System Partition with GRUB-EFI
+part /boot --source bootimg-efi --sourceparams="loader=grub-efi" --label boot --active --align 4096
+
+# Root filesystem
+part / --source rootfs --fstype=ext4 --label rootfs --align 4096
+
+# GPT partition table, BIOS/UEFI handled via bootimg-efi
+bootloader --ptable=gpt --timeout=3
