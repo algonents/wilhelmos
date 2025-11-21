@@ -15,4 +15,4 @@ inherit core-image
 require ${COREBASE}/meta/recipes-core/images/core-image-minimal.bb
 
 # WilhelmOS-specific additions
-IMAGE_INSTALL:append = " nano"
+IMAGE_INSTALL:append = " nano kbd kbd-consolefonts fonts-setup terminus-console-font"
