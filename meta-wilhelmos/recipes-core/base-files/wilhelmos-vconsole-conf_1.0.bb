@@ -10,3 +10,5 @@ do_install() {
 }
 
 FILES:${PN} = "${sysconfdir}/vconsole.conf"
+
+RDEPENDS:${PN} += "systemd"
