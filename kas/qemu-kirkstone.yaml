@@ -25,7 +25,7 @@ local_conf_header:
     DL_DIR ?= "${TOPDIR}/../downloads"
     SSTATE_DIR ?= "${TOPDIR}/../sstate-cache"
 
-    EXTRA_IMAGE_FEATURES += " debug-tweaks"
+    EXTRA_IMAGE_FEATURES:remove = "debug-tweaks"
 
 bblayers_conf_header:
   base: |

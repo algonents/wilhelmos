@@ -15,4 +15,4 @@ inherit core-image
 require ${COREBASE}/meta/recipes-core/images/core-image-minimal.bb
 
 # WilhelmOS-specific additions
-IMAGE_INSTALL:append = " nano kbd wh-terminus-console-font wilhelmos-vconsole-conf"
+IMAGE_INSTALL:append = " sudo nano kbd wh-terminus-console-font wilhelmos-vconsole-conf wilhelmos-sudoers"
