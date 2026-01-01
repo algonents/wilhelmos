@@ -8,3 +8,5 @@ part / --source rootfs --fstype=ext4 --label rootfs --align 4096
 
 # GPT partition table, BIOS/UEFI handled via bootimg-efi
 bootloader --ptable=gpt --timeout=3
+# use for qemu
+# bootloader --ptable=gpt --timeout=3 --append="console=tty0 console=ttyS0,115200 systemd.log_target=console systemd.log_level=info systemd.show_status=1 quiet=0 loglevel=7"
