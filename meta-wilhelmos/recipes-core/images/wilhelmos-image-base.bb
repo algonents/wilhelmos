@@ -15,7 +15,7 @@ inherit core-image
 require ${COREBASE}/meta/recipes-core/images/core-image-minimal.bb
 
 # WilhelmOS-specific additions
-IMAGE_INSTALL:append = " sudo nano kbd wh-terminus-console-font wilhelmos-vconsole-conf wilhelmos-sudoers"
+IMAGE_INSTALL:append = " util-linux sudo nano kbd wh-terminus-console-font wilhelmos-vconsole-conf wilhelmos-sudoers"
 
 # logging is done by systemd. Disable BusyBox logging
 IMAGE_INSTALL:remove = "busybox-syslog"
