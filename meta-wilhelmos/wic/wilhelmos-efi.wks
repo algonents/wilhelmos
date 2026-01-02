@@ -1,12 +1,14 @@
-# UEFI-bootable GPT disk image for generic x86-64 PCs (ThinkPad, HP, etc.)
+# UEFI-bootable GPT disk image for generic x86-64
 
 # EFI System Partition with GRUB-EFI
-part /boot --source bootimg-efi --sourceparams="loader=grub-efi" --label boot --active --align 4096
+# Rollback to grub by commenting/uncommenting below
+# part /boot --source bootimg-efi --sourceparams="loader=grub-efi" --label boot --active --align 4096
+part /boot --source bootimg-efi --sourceparams="loader=systemd-boot" --label boot --active --align 4096
 
 # Root filesystem
 part / --source rootfs --fstype=ext4 --label rootfs --align 4096
 
 # GPT partition table, BIOS/UEFI handled via bootimg-efi
-bootloader --ptable=gpt --timeout=3
+bootloader --ptable=gpt --timeout=3 --append="root=PARTLABEL=rootfs rootwait"
 # use for qemu
 # bootloader --ptable=gpt --timeout=3 --append="console=tty0 console=ttyS0,115200 systemd.log_target=console systemd.log_level=info systemd.show_status=1 quiet=0 loglevel=7"
