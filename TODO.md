@@ -28,6 +28,35 @@
 
 ---
 
+## User Experience — Boot Modes
+
+### Option 2 — Graphical kiosk mode (CRITICAL — primary use case)
+
+sky_guard_client is an OpenGL situation display for ATM. It uses wilhelm_renderer (custom 2D engine), Dear ImGui, GLFW, and B612Mono font. This is the core product mode.
+
+- [ ] Add GPU/DRM/KMS kernel support (CONFIG_DRM, CONFIG_DRM_I915, CONFIG_DRM_AMDGPU, etc.)
+- [ ] Add Mesa OpenGL drivers to image (meta-oe or custom recipe)
+- [ ] Add GLFW library to image (required by wilhelm_renderer for window/context creation)
+- [ ] Determine if GLFW can run directly on DRM/KMS or needs a Wayland compositor
+- [ ] If compositor needed: add cage (minimal single-app Wayland compositor)
+- [ ] Add freetype/fontconfig for TrueType font rendering (if not bundled in wilhelm_renderer)
+- [ ] Ship B612Mono-Regular.ttf font (aviation-specific, used by sky_guard_client)
+- [ ] Create systemd service to auto-launch sky_guard_client fullscreen on boot
+- [ ] Evaluate image size impact (Mesa + GPU drivers + GLFW + fonts vs base image)
+- [ ] Cross-compile sky_guard_client + wilhelm_renderer for the target (Yocto SDK or cargo-cross)
+
+### Option 1 — TTY mode (server / maintenance)
+
+Used for sky_guard_server (headless, no GPU) or system maintenance access.
+
+- [ ] systemd getty autologin override for `wilhelmos` user on tty1
+- [ ] Auto-launch TUI or shell from user profile
+- [ ] Evaluate PSF fonts for console use (Terminus, Spleen)
+- [ ] Set framebuffer resolution via kernel `video=` parameter
+- [ ] Keep login shell on tty2 (`Alt+F2`) for maintenance access when running kiosk mode
+
+---
+
 ## ED-109A Certification Roadmap
 
 WilhelmOS is positioned as COTS software (ED-109A Section 12.4) for AL3-AL5 CNS/ATM ground equipment. The roadmap below maps improvements to specific ED-109A sections and objectives.
