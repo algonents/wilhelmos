@@ -54,11 +54,21 @@ baseline. Phase 0 delivered:
 
 ### Kirkstone is EOL (April 2026)
 The pinned commits freeze the final kirkstone LTS state. A migration to
-**scarthgap (5.0 LTS)** is a near-term roadmap item. Expected impact:
-kernel 5.15 → 6.6 (re-validate `hardening.cfg` options), `create-spdx`
-moves toward SPDX 3.0 output, `LAYERSERIES_COMPAT` and kas layer-compat
-bumps. Running an EOL base contradicts the "maintained COTS" story, so this
-should precede any certification engagement.
+**wrynose (6.0 LTS, released April 2026, supported until April 2030)** is a
+near-term roadmap item. Wrynose is chosen over scarthgap (5.0 LTS, EOL
+April 2028) deliberately: one migration instead of two before the
+certification timeline matures, four years of runway instead of two, and a
+kernel/Mesa new enough for recent iGPUs (scarthgap's 6.6 kernel predates
+e.g. Arrow Lake graphics). Wrynose is young (two months at time of
+writing); the migration should wait for a few point releases and stable
+ecosystem-layer branches, which fits the sequencing below anyway.
+
+Expected impact: kernel 5.15 → 6.12+ (re-validate `hardening.cfg`
+options), `create-spdx` moves toward SPDX 3.0 output, `LAYERSERIES_COMPAT`
+and kas layer-compat bumps. Running an EOL base contradicts the
+"maintained COTS" story, so this should precede any certification
+engagement — and it should precede Phase 1 hardware work, since the
+graphics stack benefits most from the newer kernel/Mesa.
 
 ### Dev-only default credential
 `wilhelmos.conf` bakes in user `wilhelmos` with a known password
@@ -119,7 +129,7 @@ to de-risk the kernel DRM config, Mesa, and GLFW-Wayland work — so failures
 during bring-up are attributable to our stack, not the compositor recipe.
 Weston is a temporary scaffold only: it must not ship in the production
 image, and the phase is not complete until sky_guard_client runs under
-cage. The cage/wlroots recipe work is easier after the scarthgap migration
+cage. The cage/wlroots recipe work is easier after the wrynose migration
 (§3), which is another reason to sequence that migration early.
 
 ### Target GPU: integrated graphics (decided)
@@ -155,8 +165,9 @@ detail.
 newest silicon — bleeding-edge iGPUs need a newer kernel/Mesa than an LTS
 Yocto branch carries. Concrete example: an Arrow Lake-S iGPU (Core Ultra,
 2024) needs roughly kernel ≥ 6.10 + Mesa 24 — unsupported on kirkstone
-(5.15/Mesa 22) and borderline even on scarthgap (6.6). An 8th–12th gen
-Intel UHD or an established AMD APU works with LTS stacks out of the box.
+(5.15/Mesa 22) and borderline on scarthgap (6.6), but covered by the
+planned wrynose target (§3). An 8th–12th gen Intel UHD or an established
+AMD APU works with any of these stacks out of the box.
 Validate the exact iGPU SKU against the kernel/Mesa versions of the Yocto
 release in use *before* committing to hardware, and size the SKU by
 display-output requirements (monitor count × resolution per CWP position).

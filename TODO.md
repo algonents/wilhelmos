@@ -11,7 +11,7 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the phased roadmap and sequencing ratio
   - [x] `recipes-core/base-files/wilhelmos-vconsole-conf_1.0.bb`
 - [x] Add `RDEPENDS:${PN} += "sudo"` to `wilhelmos-sudoers.bb`
 - [x] Add `LAYERDEPENDS_wilhelmos = "core openembedded-layer"` to `meta-wilhelmos/conf/layer.conf`
-- [ ] Migrate from kirkstone (EOL April 2026) to scarthgap (5.0 LTS) — see DESIGN.md §3
+- [ ] Migrate from kirkstone (EOL April 2026) to wrynose (6.0 LTS, supported until April 2030) — wait for a few wrynose point releases first; see DESIGN.md §3
 
 ## Medium Priority
 
