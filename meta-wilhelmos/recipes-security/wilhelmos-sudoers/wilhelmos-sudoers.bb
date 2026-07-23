@@ -8,7 +8,7 @@ SRC_URI = "file://10-wheel"
 
 do_install() {
     install -d ${D}${sysconfdir}/sudoers.d
-    install -m 0440 ${WORKDIR}/10-wheel ${D}${sysconfdir}/sudoers.d/10-wheel
+    install -m 0440 ${UNPACKDIR}/10-wheel ${D}${sysconfdir}/sudoers.d/10-wheel
 }
 
 FILES:${PN} = "${sysconfdir}/sudoers.d"

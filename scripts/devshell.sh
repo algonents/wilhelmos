@@ -5,7 +5,7 @@ set -euo pipefail
 #   ./scripts/devshell.sh
 #   ./scripts/devshell.sh "runqemu qemux86-64 nographic"
 
-KAS_FILE="kas/qemu-kirkstone.yaml"
+KAS_FILE="kas/qemu-wrynose.yaml"
 
 if [[ $# -eq 0 ]]; then
   kas shell "${KAS_FILE}"

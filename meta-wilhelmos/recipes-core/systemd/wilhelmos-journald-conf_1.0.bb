@@ -10,7 +10,7 @@ SRC_URI = "file://10-wilhelmos-persistent.conf"
 
 do_install() {
     install -d ${D}${sysconfdir}/systemd/journald.conf.d
-    install -m 0644 ${WORKDIR}/10-wilhelmos-persistent.conf \
+    install -m 0644 ${UNPACKDIR}/10-wilhelmos-persistent.conf \
         ${D}${sysconfdir}/systemd/journald.conf.d/10-wilhelmos-persistent.conf
 }
 
