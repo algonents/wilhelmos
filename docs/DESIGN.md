@@ -16,8 +16,18 @@ platform's job is to shrink that burden by shipping:
 - safety-monitoring hooks via systemd (Section 2.4.3 objectives),
 - eventually, a COTS Software Integrity Assurance Case template.
 
-The primary product mode is a graphical kiosk running the `sky_guard_client`
-ATM situation display; a TTY mode serves headless/maintenance use.
+WilhelmOS targets two workload classes:
+
+1. **CWP display (kiosk)** — the primary product mode: a graphical kiosk
+   running the `sky_guard_client` ATM situation display.
+2. **SWIM-style services (headless)** — ATM web services in the SWIM
+   (System Wide Information Management) sense: e.g. `sky_guard_server`,
+   surveillance data distribution, information services. These must run
+   **resiliently** (automatic restart on failure, hang detection) and
+   **contained** (a misbehaving service must not starve higher-priority
+   ones). See §5 for the service resilience & resource control design.
+
+A TTY mode serves headless/maintenance use for either class.
 
 ## 2. Phase 0 — Baseline (this iteration, DONE)
 
@@ -82,7 +92,64 @@ it**. Scope:
   autologin for maintenance mode, shell kept on tty2.
 - Image-size and boot-time evaluation after the GPU stack lands.
 
-## 5. Phase 2 — Partition, update & integrity design
+## 5. Service resilience & resource control (SWIM services)
+
+WilhelmOS must run ATM information services (SWIM-style web services) so
+that a failed or runaway service is detected, restarted, and prevented from
+degrading anything more critical. All of this is systemd/cgroup-v2 policy —
+no custom supervisor is needed, which keeps the COTS argument clean.
+
+### Resilience (ED-109A §2.4.3 — safety monitoring)
+
+Per-service unit policy, shipped as a WilhelmOS template drop-in:
+
+- **Automatic restart**: `Restart=on-failure` (or `always` for stateless
+  services), `RestartSec=` with backoff.
+- **Hang detection**: `WatchdogSec=` + `sd_notify` heartbeats for services
+  that support it — catches livelock, not just crashes.
+- **Escalation**: `StartLimitIntervalSec`/`StartLimitBurst` so a
+  crash-looping service stops flapping, with `OnFailure=` hooks for an
+  alerting/degraded-mode unit; ultimately `FailureAction=` can reboot into
+  a known-good state (ties into the Phase 2 A/B design).
+- **Boot-level supervision**: the hardware watchdog chain
+  (`RuntimeWatchdogSec`, Phase 2) covers systemd itself.
+
+### Prioritization & containment (ED-109A §2.4.1 — partitioning)
+
+A fixed slice hierarchy so criticality is explicit and resource caps are
+structural rather than per-unit ad hoc:
+
+```
+-.slice
+├── wilhelmos-critical.slice     # CWP display / primary service
+│     CPUWeight high, MemoryMin reserved, IO weight high
+├── wilhelmos-services.slice     # SWIM services
+│     CPUWeight normal, MemoryHigh/MemoryMax caps, TasksMax
+└── system.slice                 # everything else (journald, timesyncd, …)
+```
+
+- **Priority**: `CPUWeight=`/`Nice=` for proportional share;
+  `CPUSchedulingPolicy=fifo|rr` reserved for genuinely latency-critical
+  processes (display rendering), used sparingly.
+- **Capping runaway processes**: `MemoryHigh=`/`MemoryMax=` (throttle, then
+  OOM-kill only the offender — `OOMPolicy=kill` scoped to the service),
+  `CPUQuota=` where a hard ceiling is wanted, `TasksMax=` against fork
+  bombs, `IPAddressDeny=`/`IPAddressAllow=` for network scoping.
+- **Sandboxing** (restriction-of-functionality, §12.4.11): service units
+  get `NoNewPrivileges=`, `ProtectSystem=strict`, `PrivateTmp=`,
+  `CapabilityBoundingSet=`, `DynamicUser=` where state permits.
+
+The resource-partitioning story directly supports the ED-109A §2.4.1
+argument that components in different slices can be assigned different ALs.
+
+**Deliverables & sequencing**: the slice hierarchy and a hardened service
+unit template can land as soon as the first real service unit exists
+(Phase 1, alongside the sky_guard units); watchdog escalation and
+`FailureAction` reboot semantics belong with Phase 2's A/B design. A
+QEMU-based fault-injection test (kill/hang/mem-hog a demo service, assert
+restart + containment) becomes part of the Phase 3 verification evidence.
+
+## 6. Phase 2 — Partition, update & integrity design
 
 These items are **coupled** and are deferred deliberately — designing them
 piecemeal would force rework:
@@ -103,7 +170,7 @@ piecemeal would force rework:
 Sequencing: Phase 1 fixes the package/service set → Phase 2 freezes the
 partition and integrity architecture around it.
 
-## 6. Phase 3 — ED-109A evidence package
+## 7. Phase 3 — ED-109A evidence package
 
 - PSAA template (Section 11.1) mapping WilhelmOS artifacts to objectives.
 - Software Configuration Index (Section 11.16) generated from the pinned
@@ -114,7 +181,7 @@ partition and integrity architecture around it.
   `kernel_configcheck` gate — turning the Phase 0 verification steps into
   repeatable automated evidence.
 
-## 7. Sequencing rationale
+## 8. Sequencing rationale
 
 Hygiene and reproducibility came first because every later claim — "this
 image is hardened", "this service set is minimal", "this binary matches this

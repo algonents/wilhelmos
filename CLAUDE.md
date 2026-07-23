@@ -31,7 +31,7 @@ WilhelmOS supports two boot modes. **Option 2 is the primary mode** — it runs 
 ### Option 1 — TTY mode (server / maintenance)
 - Boot → systemd → auto-login → TUI on framebuffer console
 - PSF bitmap font (Terminus), no GPU required, minimal footprint
-- Used for sky_guard_server (headless) or system maintenance
+- Used for sky_guard_server (headless), SWIM-style ATM web services (run resiliently under systemd with restart/priority/resource-cap policies — see docs/DESIGN.md §5), or system maintenance
 
 ### Option 2 — Graphical kiosk mode (critical)
 - Boot → systemd → sky_guard_client (fullscreen OpenGL application)

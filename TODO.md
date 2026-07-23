@@ -89,7 +89,7 @@ Supports the COTS software restriction of functionality strategy (Section 12.4.1
 
 Safety monitoring allows the monitored software to be assigned the AL associated with loss of the monitored function, provided the monitor is independent and at the appropriate AL.
 
-- [ ] Enable hardware watchdog timer support (kernel + systemd `RuntimeWatchdogSec`) — Phase 2, see DESIGN.md §5
+- [ ] Enable hardware watchdog timer support (kernel + systemd `RuntimeWatchdogSec`) — Phase 2, see DESIGN.md §6
 - [ ] Configure systemd service restart policies for critical services — Phase 2
 - [x] Add persistent logging to survive reboots (`Storage=persistent` via `wilhelmos-journald-conf` + `VOLATILE_LOG_DIR = "no"`)
 - [ ] Consider A/B partition scheme for safe updates and rollback (supports Section 2.5.4 cutover/hot swapping)
