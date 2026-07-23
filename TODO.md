@@ -117,6 +117,7 @@ The applicant needs evidence to satisfy additional COTS objectives (Section 12.4
 Supports verification objectives in Annex A, Tables A-3 through A-7. The level of structural coverage depends on the target AL (Table A-7): decision coverage for AL1-AL2, statement coverage for AL3.
 
 - [ ] Add automated boot-to-login integration tests (QEMU-based CI)
+- [ ] Boot the .wic image in QEMU via OVMF (`runqemu wic ovmf`) to exercise the real UEFI → systemd-boot → GPT chain that ext4 direct-kernel boot skips
 - [ ] Add image size and package manifest regression checks
 - [ ] Implement kernel config verification (`bitbake -c kernel_configcheck`)
 - [ ] Define structural coverage targets appropriate to target AL (Table A-7)
