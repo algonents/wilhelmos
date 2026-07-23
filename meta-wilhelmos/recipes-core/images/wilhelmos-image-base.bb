@@ -2,9 +2,11 @@ SUMMARY = "WilhelmOS base image for x86-64 (QEMU + bare metal)"
 DESCRIPTION = "Minimal WilhelmOS base image derived from core-image-minimal, with extra tools."
 LICENSE = "MIT"
 
-# Add a UEFI .wic image type in addition to the default formats (ext4, etc.)
-# This keeps your existing QEMU workflow intact.
-IMAGE_FSTYPES += " wic"
+# Add a UEFI .wic image type in addition to the default formats.
+# Also keep an uncompressed ext4: wrynose's default is ext4.zst, which
+# runqemu only accepts in (write-discarding) snapshot mode.
+IMAGE_FSTYPES += " wic ext4"
+QB_DEFAULT_FSTYPE = "ext4"
 
 # Use our custom UEFI/GPT layout when building the .wic image
 WKS_FILE = "wilhelmos-efi.wks"
