@@ -122,10 +122,50 @@ image, and the phase is not complete until sky_guard_client runs under
 cage. The cage/wlroots recipe work is easier after the scarthgap migration
 (§3), which is another reason to sequence that migration early.
 
+### Target GPU: integrated graphics (decided)
+
+**Production hardware targets integrated Intel or AMD graphics (iGPU).**
+Integrated does not mean software rendering: an iGPU is a full GPU with
+hardware OpenGL, driven by in-tree kernel drivers (i915/xe for Intel,
+amdgpu for AMD) and Mesa's native userspace drivers (iris/radeonsi) —
+hardware acceleration through exactly the DRM/KMS + Mesa stack this design
+already assumes, with no special-casing.
+
+Rationale:
+
+1. **Fully open driver stack** — in-tree kernel drivers + Mesa. No binary
+   blob, no out-of-tree kernel module; the SBOM covers the entire graphics
+   stack and the kernel hardening/module story stays intact.
+2. **Certifiably boring** — i915/amdgpu + Mesa are among the most widely
+   deployed graphics drivers in existence (service-experience argument,
+   ED-109A §12.3.4).
+3. **Adequate performance** — a modern iGPU drives multiple 4K displays;
+   the CWP workload (2D OpenGL: map, tracks, symbology, ImGui chrome) is
+   trivial against its capability.
+
+Discrete NVIDIA GPUs are explicitly **not** targeted: the proprietary
+driver is a closed blob with an out-of-tree kernel module (breaks the SBOM,
+kernel-hardening, and restriction-of-functionality arguments), nouveau
+cannot reclock modern cards, and the open NVK path needs a far newer Mesa
+than our LTS carries. If a future deployment mandates NVIDIA hardware, that
+is a major design decision requiring its own section here — not a bring-up
+detail.
+
+**Hardware selection guidance**: prefer a *mature* iGPU generation over the
+newest silicon — bleeding-edge iGPUs need a newer kernel/Mesa than an LTS
+Yocto branch carries. Concrete example: an Arrow Lake-S iGPU (Core Ultra,
+2024) needs roughly kernel ≥ 6.10 + Mesa 24 — unsupported on kirkstone
+(5.15/Mesa 22) and borderline even on scarthgap (6.6). An 8th–12th gen
+Intel UHD or an established AMD APU works with LTS stacks out of the box.
+Validate the exact iGPU SKU against the kernel/Mesa versions of the Yocto
+release in use *before* committing to hardware, and size the SKU by
+display-output requirements (monitor count × resolution per CWP position).
+
 ### Scope
 
 - Kernel: DRM/KMS config fragment (`CONFIG_DRM`, `CONFIG_DRM_VIRTIO_GPU`
-  for QEMU; i915/amdgpu per target hardware for bare metal).
+  for QEMU; `CONFIG_DRM_I915` / `CONFIG_DRM_AMDGPU` per target iGPU for
+  bare metal).
 - `DISTRO_FEATURES += "opengl wayland"`.
 - Userspace: Mesa (GL/EGL/GBM), cage (+ wlroots recipe if needed), GLFW
   (meta-oe), freetype/fontconfig, B612Mono font package (aviation display
