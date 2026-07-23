@@ -31,29 +31,27 @@ WilhelmOS supports two boot modes. **Option 2 is the primary mode** — it runs 
 ### Option 1 — TTY mode (server / maintenance)
 - Boot → systemd → auto-login → TUI on framebuffer console
 - PSF bitmap font (Terminus), no GPU required, minimal footprint
-- Used for sky_guard_server (headless) or system maintenance
+- Used for sky_guard_server (headless), SWIM-style ATM web services (run resiliently under systemd with restart/priority/resource-cap policies — see docs/DESIGN.md §5), or system maintenance
 
 ### Option 2 — Graphical kiosk mode (critical)
 - Boot → systemd → sky_guard_client (fullscreen OpenGL application)
 - **sky_guard_client** is a situation display for ATM built with **wilhelm_renderer** (custom 2D OpenGL engine) + **Dear ImGui** for UI chrome
 - Uses B612Mono TrueType font (aviation-specific, designed by Airbus for cockpit displays)
-- Requires: GPU drivers (Mesa + DRM/KMS), OpenGL, GLFW
-- May need a minimal Wayland compositor (cage) if GLFW cannot run directly on DRM/KMS
-- The application stack: `systemd → [cage →] sky_guard_client → OpenGL → DRM/KMS → display`
+- Requires: GPU drivers (Mesa + DRM/KMS), OpenGL, GLFW; production hardware targets **integrated Intel/AMD graphics** (in-tree drivers, full hardware acceleration — discrete NVIDIA explicitly not targeted, see docs/DESIGN.md §4)
+- Compositor: **cage** (minimal Wayland kiosk compositor) — required, since GLFW has no direct DRM/KMS backend; chosen over Weston for certification-scope reasons (see docs/DESIGN.md §4)
+- The application stack: `systemd → cage → sky_guard_client → OpenGL → DRM/KMS → display`
 
 ### Related Projects
 
 | Project | Repo | Purpose |
 |---------|------|---------|
-| sky_guard | `algonents/sky_guard` | ATM situation display (client + server) |
 | wilhelm_renderer | `../wilhelm_renderer` | Custom 2D OpenGL rendering engine |
 | wilhelm_renderer_imgui | `../wilhelm_renderer_imgui` | Dear ImGui integration for wilhelm_renderer |
-| libasterix | `../libasterix` | ASTERIX message parsing library |
 
 ## Build System
 
 - **KAS** orchestrates the Yocto build. Config: `kas/qemu-kirkstone.yaml`
-- **Upstream layers:** Poky (meta, meta-poky, meta-yocto-bsp) + meta-openembedded (meta-oe), both on kirkstone
+- **Upstream layers:** Poky (meta, meta-poky, meta-yocto-bsp) + meta-openembedded (meta-oe), both pinned to exact kirkstone commit SHAs in `kas/qemu-kirkstone.yaml` (update pins via `git ls-remote`)
 - **Custom layer:** `meta-wilhelmos/` (priority 6)
 - Shared download/sstate dirs live one level up: `../downloads`, `../sstate-cache`
 
@@ -87,15 +85,15 @@ meta-wilhelmos/
     base-files/                 # vconsole.conf (fr_CH keymap, Terminus font)
   recipes-fonts/                # Terminus console font package
   recipes-kernel/               # Kernel config appends (USB, EFI, ext4)
-  recipes-security/             # Sudoers policy (wheel group, passwordless)
+  recipes-security/             # Sudoers policy (wheel group, password required)
   wic/                          # WIC disk image layout
 ```
 
 ## User Setup
 
 - Root is locked (`password = '!'`)
-- Default user: `wilhelmos` (password: `wilhelmos`), member of `wheel` group
-- Wheel group has passwordless sudo via `/etc/sudoers.d/10-wheel`
+- Default user: `wilhelmos` (password: `wilhelmos`), member of `wheel` group — **dev-only credential**; production images must override `EXTRA_USERS_PARAMS`
+- Wheel group has full sudo (password required) via `/etc/sudoers.d/10-wheel`
 
 ## Backlog
 

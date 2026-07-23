@@ -1,14 +1,19 @@
 header:
-  version: 11
+  version: 14
 
 machine: qemux86-64
 distro: wilhelmos
 target: wilhelmos-image-base
 
+# Upstream layers are pinned to exact commits for reproducible builds
+# (ED-109A Section 7 configuration management). kirkstone is EOL since
+# April 2026, so these are effectively the final LTS branch tips.
+# To update a pin: git ls-remote <url> refs/heads/kirkstone
 repos:
   poky:
     url: https://git.yoctoproject.org/poky
-    refspec: kirkstone
+    branch: kirkstone
+    commit: 393064579dfdd0ed2d4ed4c27d238d7d2292c08b
     layers:
       meta:
       meta-poky:
@@ -16,7 +21,8 @@ repos:
 
   meta-openembedded:
     url: https://git.openembedded.org/meta-openembedded
-    refspec: kirkstone
+    branch: kirkstone
+    commit: ce8539c941f6fcbecaca4d16640ac105c0595589
     layers:
       meta-oe:
 

@@ -1,14 +1,9 @@
-# UEFI-bootable GPT disk image for generic x86-64
+# WilhelmOS UEFI-bootable GPT disk image for generic x86-64 (production).
+# For a variant with verbose serial-console kernel args (useful when
+# dd'ing to USB for bare-metal debugging), see wilhelmos-efi-debug.wks.
 
-# EFI System Partition with GRUB-EFI
-# Rollback to grub by commenting/uncommenting below
-# part /boot --source bootimg-efi --sourceparams="loader=grub-efi" --label boot --active --align 4096
 part /boot --source bootimg-efi --sourceparams="loader=systemd-boot" --label boot --active --align 4096
 
-# Root filesystem
 part / --source rootfs --fstype=ext4 --label rootfs --align 4096
 
-# GPT partition table, BIOS/UEFI handled via bootimg-efi
 bootloader --ptable=gpt --timeout=3 --append="root=PARTLABEL=rootfs rootwait"
-# use for qemu
-# bootloader --ptable=gpt --timeout=3 --append="console=tty0 console=ttyS0,115200 systemd.log_target=console systemd.log_level=info systemd.show_status=1 quiet=0 loglevel=7"

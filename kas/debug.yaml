@@ -1,0 +1,8 @@
+# Overlay: build the debug disk image with verbose boot logging.
+# Usage: kas build kas/qemu-kirkstone.yaml:kas/debug.yaml
+header:
+  version: 14
+
+local_conf_header:
+  debug-wks: |
+    WKS_FILE = "wilhelmos-efi-debug.wks"

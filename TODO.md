@@ -1,30 +1,33 @@
 # WilhelmOS - Improvement Backlog
 
+See [docs/DESIGN.md](docs/DESIGN.md) for the phased roadmap and sequencing rationale.
+
 ## High Priority
 
-- [ ] Fix Terminus font license: change `LICENSE = "CLOSED"` to `LICENSE = "OFL-1.1"` with proper `LIC_FILES_CHKSUM` in `wh-terminus-console-font.bb`
-- [ ] Add missing recipe metadata (`SUMMARY`, `DESCRIPTION`, `HOMEPAGE`, `LIC_FILES_CHKSUM`) to:
-  - [ ] `recipes-fonts/terminus-console-font/wh-terminus-console-font.bb`
-  - [ ] `recipes-security/wilhelmos-sudoers/wilhelmos-sudoers.bb`
-  - [ ] `recipes-core/base-files/wilhelmos-vconsole-conf_1.0.bb`
-- [ ] Add `RDEPENDS:${PN} += "sudo"` to `wilhelmos-sudoers.bb`
-- [ ] Add `LAYERDEPENDS_wilhelmos = "core openembedded-layer"` to `meta-wilhelmos/conf/layer.conf`
+- [x] Fix Terminus font license: change `LICENSE = "CLOSED"` to `LICENSE = "OFL-1.1"` with proper `LIC_FILES_CHKSUM` in `wh-terminus-console-font.bb`
+- [x] Add missing recipe metadata (`SUMMARY`, `DESCRIPTION`, `HOMEPAGE`, `LIC_FILES_CHKSUM`) to:
+  - [x] `recipes-fonts/terminus-console-font/wh-terminus-console-font.bb`
+  - [x] `recipes-security/wilhelmos-sudoers/wilhelmos-sudoers.bb`
+  - [x] `recipes-core/base-files/wilhelmos-vconsole-conf_1.0.bb`
+- [x] Add `RDEPENDS:${PN} += "sudo"` to `wilhelmos-sudoers.bb`
+- [x] Add `LAYERDEPENDS_wilhelmos = "core openembedded-layer"` to `meta-wilhelmos/conf/layer.conf`
+- [ ] Migrate from kirkstone (EOL April 2026) to wrynose (6.0 LTS, supported until April 2030) — wait for a few wrynose point releases first; see DESIGN.md §3
 
 ## Medium Priority
 
-- [ ] Makefile improvements:
-  - [ ] Add default target (`.DEFAULT_GOAL := build`)
-  - [ ] Add `help` target listing available commands
-  - [ ] Add KAS availability check before build
-- [ ] Kernel config (`usb-root.cfg`):
-  - [ ] Add `CONFIG_EFI_STUB=y` and `CONFIG_VFAT_FS=y`
-  - [ ] Add section comments explaining each config group
-- [ ] Clean up `wilhelmos-efi.wks`: remove commented-out QEMU debug boot parameters or move to a separate debug WKS
+- [x] Makefile improvements:
+  - [x] Add default target (`.DEFAULT_GOAL := build`)
+  - [x] Add `help` target listing available commands
+  - [x] Add KAS availability check before build
+- [x] Kernel config (`usb-root.cfg`):
+  - [x] Add `CONFIG_EFI_STUB=y` and `CONFIG_VFAT_FS=y`
+  - [x] Add section comments explaining each config group
+- [x] Clean up `wilhelmos-efi.wks`: remove commented-out QEMU debug boot parameters or move to a separate debug WKS (now `wilhelmos-efi-debug.wks` + `kas/debug.yaml`)
 
 ## Low Priority
 
-- [ ] Update KAS header version from 11 to latest supported (check with `kas --version`)
-- [ ] Add cross-reference comments between busybox syslog disabling (bbappend) and distro conf (`VIRTUAL-RUNTIME_syslog`)
+- [x] Update KAS header version from 11 to latest supported (now 14, requires kas >= 4.0)
+- [x] Add cross-reference comments between busybox syslog disabling (bbappend) and distro conf (`VIRTUAL-RUNTIME_syslog`)
 
 ---
 
@@ -37,8 +40,8 @@ sky_guard_client is an OpenGL situation display for ATM. It uses wilhelm_rendere
 - [ ] Add GPU/DRM/KMS kernel support (CONFIG_DRM, CONFIG_DRM_I915, CONFIG_DRM_AMDGPU, etc.)
 - [ ] Add Mesa OpenGL drivers to image (meta-oe or custom recipe)
 - [ ] Add GLFW library to image (required by wilhelm_renderer for window/context creation)
-- [ ] Determine if GLFW can run directly on DRM/KMS or needs a Wayland compositor
-- [ ] If compositor needed: add cage (minimal single-app Wayland compositor)
+- [x] Determine if GLFW can run directly on DRM/KMS or needs a Wayland compositor — it cannot (GLFW is X11/Wayland only); compositor required, **cage** chosen (see DESIGN.md §4)
+- [ ] Add cage recipe (+ wlroots if needed); Weston kiosk-shell allowed as bring-up scaffold only, must not ship
 - [ ] Add freetype/fontconfig for TrueType font rendering (if not bundled in wilhelm_renderer)
 - [ ] Ship B612Mono-Regular.ttf font (aviation-specific, used by sky_guard_client)
 - [ ] Create systemd service to auto-launch sky_guard_client fullscreen on boot
@@ -65,10 +68,10 @@ WilhelmOS is positioned as COTS software (ED-109A Section 12.4) for AL3-AL5 CNS/
 
 These items produce evidence for Software Configuration Management objectives (Annex A, Table A-8) — configuration identification (7.2.1), baselines and traceability (7.2.2), and archive/retrieval (7.2.7).
 
-- [ ] Pin all upstream repos to exact commit SHAs (not branch names) in `kas/qemu-kirkstone.yaml`
+- [x] Pin all upstream repos to exact commit SHAs (not branch names) in `kas/qemu-kirkstone.yaml`
 - [ ] Archive download sources for offline reproducible builds
-- [ ] Enable and verify reproducible builds (`INHERIT += "reproducible_build"`)
-- [ ] Generate SBOM (Software Bill of Materials) using Yocto's built-in support (`INHERIT += "create-spdx"`)
+- [x] Enable and verify reproducible builds (`BUILD_REPRODUCIBLE_BINARIES = "1"` asserted; kirkstone has no separate class) — bit-for-bit verification still pending
+- [x] Generate SBOM (Software Bill of Materials) using Yocto's built-in support (`INHERIT += "create-spdx"`)
 - [ ] Establish a version baselining strategy (tag releases, freeze configs per baseline)
 - [ ] Produce Software Configuration Index (Section 11.16) for each release
 
@@ -86,9 +89,9 @@ Supports the COTS software restriction of functionality strategy (Section 12.4.1
 
 Safety monitoring allows the monitored software to be assigned the AL associated with loss of the monitored function, provided the monitor is independent and at the appropriate AL.
 
-- [ ] Enable hardware watchdog timer support (kernel + systemd `RuntimeWatchdogSec`)
-- [ ] Configure systemd service restart policies for critical services
-- [ ] Add persistent logging to survive reboots (`Storage=persistent` in journald.conf)
+- [ ] Enable hardware watchdog timer support (kernel + systemd `RuntimeWatchdogSec`) — Phase 2, see DESIGN.md §6
+- [ ] Configure systemd service restart policies for critical services — Phase 2
+- [x] Add persistent logging to survive reboots (`Storage=persistent` via `wilhelmos-journald-conf` + `VOLATILE_LOG_DIR = "no"`)
 - [ ] Consider A/B partition scheme for safe updates and rollback (supports Section 2.5.4 cutover/hot swapping)
 
 ### COTS Evidence Package (ED-109A Section 12.4)

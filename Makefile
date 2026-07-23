@@ -1,23 +1,28 @@
 KAS_FILE ?= kas/qemu-kirkstone.yaml
 
-.PHONY: build run shell clean distclean
+.DEFAULT_GOAL := build
+.PHONY: build run shell clean distclean help check-kas
 
-## Build the QEMU core-image-minimal image
-build:
+check-kas:
+	@command -v kas >/dev/null 2>&1 || \
+	  { echo "error: 'kas' not found (install: pip3 install --user kas, need >= 4.0)"; exit 1; }
+	@kas --version
+
+build: check-kas ## Build the WilhelmOS image via kas
 	kas build $(KAS_FILE)
 
-## Run the built image in QEMU (console-only)
-run:
+run: check-kas ## Run the built image in QEMU (console-only)
 	kas shell $(KAS_FILE) -c 'runqemu qemux86-64 nographic'
 
-## Drop into a Yocto dev shell (bitbake, runqemu, etc.)
-shell:
+shell: check-kas ## Drop into a Yocto dev shell (bitbake, runqemu, etc.)
 	kas shell $(KAS_FILE)
 
-## Remove the build directory (but keep downloads/sstate for faster rebuilds)
-clean:
+clean: ## Remove the build directory (keep downloads/sstate for faster rebuilds)
 	rm -rf build/
 
-## Remove everything including shared downloads/sstate caches
-distclean: clean
+distclean: clean ## Remove build/ plus the shared ../downloads and ../sstate-cache
 	rm -rf ../downloads ../sstate-cache
+
+help: ## Show available targets
+	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | \
+	  awk 'BEGIN {FS = ":.*?## "} {printf "  %-12s %s\n", $$1, $$2}'

@@ -1,4 +1,6 @@
 # Stop the busybox recipe from enabling syslog/klog "mode"
+# Logging is handled by systemd-journald instead; see
+# conf/distro/wilhelmos.conf (VIRTUAL-RUNTIME_syslog = "systemd").
 SRC_URI:remove = "file://syslog.cfg file://klogd.cfg"
 
 do_install:append() {

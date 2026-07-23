@@ -1,0 +1,11 @@
+# WilhelmOS UEFI-bootable GPT disk image — debug variant.
+# Same layout as wilhelmos-efi.wks but with verbose console/systemd boot
+# logging on the kernel cmdline. Intended for dd-to-USB bare-metal
+# debugging; runqemu constructs its own cmdline and mostly ignores this.
+# Select via: kas build kas/qemu-kirkstone.yaml:kas/debug.yaml
+
+part /boot --source bootimg-efi --sourceparams="loader=systemd-boot" --label boot --active --align 4096
+
+part / --source rootfs --fstype=ext4 --label rootfs --align 4096
+
+bootloader --ptable=gpt --timeout=3 --append="root=PARTLABEL=rootfs rootwait console=tty0 console=ttyS0,115200 systemd.log_target=console systemd.log_level=info systemd.show_status=1 loglevel=7"
