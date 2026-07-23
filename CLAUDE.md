@@ -14,16 +14,6 @@ WilhelmOS is positioned as COTS software under ED-109A Section 12.4. The system 
 - Certification evidence artifacts (SBOM, configuration management records, test results) that map to ED-109A Section 12.4.10 objectives
 - A COTS Software Integrity Assurance Case template (per Section 12.4.11)
 
-### ED-109A Assurance Level Targeting
-
-ED-109A defines six Assurance Levels (AL1 through AL6), mapped to failure condition severity. AL4 has no airborne equivalent and is unique to ground systems.
-
-| AL Level | Viability | Rationale |
-|----------|-----------|-----------|
-| AL5-AL6 | Strong | Statement coverage sufficient (AL5), no guidance needed (AL6). Service experience argument (Section 12.3.4) is sufficient for Linux. |
-| AL4 | Strong | No associated failure condition category. Light objectives. Unique to ground systems. |
-| AL3 | Feasible | Needs decision coverage and more documentation, but no MC/DC. COTS framework (Section 12.4) + service experience carries significant weight. |
-| AL1-AL2 | Not targeted | Requires MC/DC-like structural coverage (Annex A, Table A-7), full independence, and complete traceability. Impractical for the Linux kernel. |
 
 ### Certification Strategy
 
