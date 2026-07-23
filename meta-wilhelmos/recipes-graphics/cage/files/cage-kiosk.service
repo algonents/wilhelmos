@@ -1,0 +1,30 @@
+[Unit]
+Description=Cage Wayland kiosk running the wilhelm_renderer imgui demo
+Requires=seatd.service
+After=seatd.service systemd-user-sessions.service getty@tty1.service
+Conflicts=getty@tty1.service
+ConditionPathExists=/dev/tty1
+Before=graphical.target
+
+[Service]
+User=kiosk
+Group=kiosk
+SupplementaryGroups=video input render seat
+Environment=LIBSEAT_BACKEND=seatd
+Environment=XDG_RUNTIME_DIR=/run/cage
+RuntimeDirectory=cage
+RuntimeDirectoryMode=0700
+TTYPath=/dev/tty1
+StandardInput=tty-fail
+StandardOutput=journal
+StandardError=journal
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+UtmpIdentifier=tty1
+ExecStart=/usr/bin/cage -ds -- /usr/bin/wilhelm-imgui-demo
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=graphical.target
