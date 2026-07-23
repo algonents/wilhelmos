@@ -1,5 +1,5 @@
 # Overlay: build the debug disk image with verbose boot logging.
-# Usage: kas build kas/qemu-kirkstone.yaml:kas/debug.yaml
+# Usage: kas build kas/qemu-wrynose.yaml:kas/debug.yaml
 header:
   version: 14
 

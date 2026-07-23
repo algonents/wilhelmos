@@ -1,0 +1,54 @@
+header:
+  version: 14
+
+machine: qemux86-64
+distro: wilhelmos
+target: wilhelmos-image-base
+
+# Upstream repos are pinned to exact commits for reproducible builds
+# (ED-109A Section 7 configuration management).
+# From Yocto 5.3 onward there is no combined poky repository; the build
+# uses openembedded-core + bitbake + meta-yocto (meta-poky/meta-yocto-bsp)
+# as separate repos.
+# To update a pin: git ls-remote <url> refs/heads/wrynose (bitbake: 2.18)
+repos:
+  openembedded-core:
+    url: https://git.openembedded.org/openembedded-core
+    branch: wrynose
+    commit: b5a6cada82d7ffb362bda9081c354dcc0b6ee264
+    layers:
+      meta:
+
+  bitbake:
+    url: https://git.openembedded.org/bitbake
+    branch: "2.18"
+    commit: fae9db3168dbff1b8c76fe9c6726a9687ff97514
+    layers:
+      .: disabled
+
+  meta-yocto:
+    url: https://git.yoctoproject.org/meta-yocto
+    branch: wrynose
+    commit: 824795b885b25e074a2880fbcd54e1a6c875d47d
+    layers:
+      meta-poky:
+      meta-yocto-bsp:
+
+  meta-openembedded:
+    url: https://git.openembedded.org/meta-openembedded
+    branch: wrynose
+    commit: d97b5602d7f64422c94b7311466cda7f6b1962d5
+    layers:
+      meta-oe:
+
+local_conf_header:
+  base: |
+    DL_DIR ?= "${TOPDIR}/../downloads"
+    SSTATE_DIR ?= "${TOPDIR}/../sstate-cache"
+    EXTRA_IMAGE_FEATURES:remove = "debug-tweaks"
+
+bblayers_conf_header:
+  base: |
+    BBLAYERS:append = " \
+      ${TOPDIR}/../meta-wilhelmos \
+    "

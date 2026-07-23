@@ -34,9 +34,9 @@ A TTY mode serves headless/maintenance use for either class.
 Everything later phases claim as evidence hangs off a fixed, auditable
 baseline. Phase 0 delivered:
 
-- **Pinned upstreams** in `kas/qemu-kirkstone.yaml`:
-  - poky @ `393064579dfdd0ed2d4ed4c27d238d7d2292c08b` (kirkstone)
-  - meta-openembedded @ `ce8539c941f6fcbecaca4d16640ac105c0595589` (kirkstone)
+- **Pinned upstreams** (originally kirkstone: poky @ `3930645`,
+  meta-openembedded @ `ce8539c`; superseded by the wrynose migration —
+  current pins live in `kas/qemu-wrynose.yaml`, see §3).
 - **SBOM**: `create-spdx` inherited in the distro conf; SPDX archive lands in
   `tmp/deploy/images/`.
 - **Reproducibility**: `BUILD_REPRODUCIBLE_BINARIES = "1"` asserted;
@@ -44,7 +44,8 @@ baseline. Phase 0 delivered:
 - **Kernel hardening fragment** (`hardening.cfg`): KASLR, strong stack
   protector, strict RWX, hardened usercopy/slab, `/dev/mem` removed,
   lockdown + yama LSMs compiled in (inert — see §3).
-- **Persistent journald** with size caps; `VOLATILE_LOG_DIR = "no"`.
+- **Persistent journald** with size caps; /var/log kept on real storage
+  (`VOLATILE_LOG_DIR` on kirkstone, fs-perms table removal since wrynose).
 - **Recipe hygiene**: correct licenses (Terminus font is OFL-1.1), full
   metadata, layer dependencies, fetcher-based installs.
 - **Debug/production wic split**: `wilhelmos-efi.wks` (production) vs
@@ -52,23 +53,22 @@ baseline. Phase 0 delivered:
 
 ## 3. Known constraints & flagged items
 
-### Kirkstone is EOL (April 2026)
-The pinned commits freeze the final kirkstone LTS state. A migration to
-**wrynose (6.0 LTS, released April 2026, supported until April 2030)** is a
-near-term roadmap item. Wrynose is chosen over scarthgap (5.0 LTS, EOL
-April 2028) deliberately: one migration instead of two before the
-certification timeline matures, four years of runway instead of two, and a
-kernel/Mesa new enough for recent iGPUs (scarthgap's 6.6 kernel predates
-e.g. Arrow Lake graphics). Wrynose is young (two months at time of
-writing); the migration should wait for a few point releases and stable
-ecosystem-layer branches, which fits the sequencing below anyway.
+### Yocto base: wrynose 6.0 LTS (migrated 2026-07-23)
+WilhelmOS started on kirkstone (4.0 LTS, EOL April 2026) and migrated
+directly to **wrynose (6.0 LTS, supported until April 2030)**, skipping
+scarthgap deliberately: one migration instead of two before the
+certification timeline matures, four years of runway, and a kernel/Mesa
+new enough for recent iGPUs (scarthgap's 6.6 kernel predates e.g. Arrow
+Lake graphics). Wrynose is young — pins should be advanced as point
+releases land.
 
-Expected impact: kernel 5.15 → 6.12+ (re-validate `hardening.cfg`
-options), `create-spdx` moves toward SPDX 3.0 output, `LAYERSERIES_COMPAT`
-and kas layer-compat bumps. Running an EOL base contradicts the
-"maintained COTS" story, so this should precede any certification
-engagement — and it should precede Phase 1 hardware work, since the
-graphics stack benefits most from the newer kernel/Mesa.
+Notable changes absorbed in the migration: Yocto 5.3+ publishes no poky
+combined repo (the build uses openembedded-core + bitbake + meta-yocto as
+separate pinned repos); `INIT_MANAGER = "systemd"` replaces manual
+feature juggling and brings `usrmerge`; `VOLATILE_LOG_DIR` became a
+fs-perms-table removal; recipes unpack local files to `UNPACKDIR`
+(`S = "${WORKDIR}"` unsupported); layer wks files moved to `files/wic/`.
+Current pins live in `kas/qemu-wrynose.yaml`.
 
 ### Dev-only default credential
 `wilhelmos.conf` bakes in user `wilhelmos` with a known password
@@ -129,8 +129,8 @@ to de-risk the kernel DRM config, Mesa, and GLFW-Wayland work — so failures
 during bring-up are attributable to our stack, not the compositor recipe.
 Weston is a temporary scaffold only: it must not ship in the production
 image, and the phase is not complete until sky_guard_client runs under
-cage. The cage/wlroots recipe work is easier after the wrynose migration
-(§3), which is another reason to sequence that migration early.
+cage. The cage/wlroots recipe work benefits from the wrynose base (§3) and
+its newer wayland/libinput stack.
 
 ### Target GPU: integrated graphics (decided)
 
@@ -164,10 +164,10 @@ detail.
 **Hardware selection guidance**: prefer a *mature* iGPU generation over the
 newest silicon — bleeding-edge iGPUs need a newer kernel/Mesa than an LTS
 Yocto branch carries. Concrete example: an Arrow Lake-S iGPU (Core Ultra,
-2024) needs roughly kernel ≥ 6.10 + Mesa 24 — unsupported on kirkstone
-(5.15/Mesa 22) and borderline on scarthgap (6.6), but covered by the
-planned wrynose target (§3). An 8th–12th gen Intel UHD or an established
-AMD APU works with any of these stacks out of the box.
+2024) needs roughly kernel ≥ 6.10 + Mesa 24 — out of reach for older LTS
+branches (kirkstone: 5.15/Mesa 22) but covered by our wrynose base (§3).
+An 8th–12th gen Intel UHD or an established AMD APU works with any LTS
+stack out of the box.
 Validate the exact iGPU SKU against the kernel/Mesa versions of the Yocto
 release in use *before* committing to hardware, and size the SKU by
 display-output requirements (monitor count × resolution per CWP position).

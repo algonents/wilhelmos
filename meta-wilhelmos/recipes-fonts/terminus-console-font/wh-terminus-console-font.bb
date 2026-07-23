@@ -10,13 +10,12 @@ PV = "4.49.1"
 # the .psf.gz directly, so ship it compressed.
 SRC_URI = "file://ter-u32n.psf.gz;unpack=0"
 
-S = "${WORKDIR}"
 
 inherit allarch
 
 do_install() {
     install -d ${D}${datadir}/consolefonts
-    install -m 0644 ${WORKDIR}/ter-u32n.psf.gz \
+    install -m 0644 ${UNPACKDIR}/ter-u32n.psf.gz \
         ${D}${datadir}/consolefonts/ter-u32n.psf.gz
 }
 

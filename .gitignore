@@ -29,3 +29,6 @@ cache/
 .DS_Store
 .vscode/
 .idea/
+openembedded-core/
+bitbake/
+meta-yocto/

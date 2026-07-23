@@ -1,4 +1,4 @@
-KAS_FILE ?= kas/qemu-kirkstone.yaml
+KAS_FILE ?= kas/qemu-wrynose.yaml
 
 .DEFAULT_GOAL := build
 .PHONY: build run shell clean distclean help check-kas

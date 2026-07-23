@@ -1,6 +1,6 @@
 # WilhelmOS
 
-Minimal Linux distribution built with the Yocto Project (Kirkstone branch), targeting QEMU x86-64 and bare-metal x86-64.
+Minimal Linux distribution built with the Yocto Project (wrynose, 6.0 LTS), targeting QEMU x86-64 and bare-metal x86-64.
 
 ## Objective
 
@@ -50,8 +50,8 @@ WilhelmOS supports two boot modes. **Option 2 is the primary mode** — it runs 
 
 ## Build System
 
-- **KAS** orchestrates the Yocto build. Config: `kas/qemu-kirkstone.yaml`
-- **Upstream layers:** Poky (meta, meta-poky, meta-yocto-bsp) + meta-openembedded (meta-oe), both pinned to exact kirkstone commit SHAs in `kas/qemu-kirkstone.yaml` (update pins via `git ls-remote`)
+- **KAS** orchestrates the Yocto build. Config: `kas/qemu-wrynose.yaml`
+- **Upstream repos:** openembedded-core (meta) + bitbake + meta-yocto (meta-poky, meta-yocto-bsp) + meta-openembedded (meta-oe) — Yocto 5.3+ has no poky combined repo; all pinned to exact commit SHAs in `kas/qemu-wrynose.yaml` (update pins via `git ls-remote`)
 - **Custom layer:** `meta-wilhelmos/` (priority 6)
 - Shared download/sstate dirs live one level up: `../downloads`, `../sstate-cache`
 
@@ -103,6 +103,6 @@ See [TODO.md](TODO.md) for:
 
 ## Conventions
 
-- Recipes use Yocto Kirkstone syntax (`:append`, `:remove`, not `_append`)
+- Recipes use modern Yocto syntax (`:append`, `:remove`, not `_append`)
 - Recipe overrides go in `.bbappend` files with `%` version wildcard
-- KAS config variable: `KAS_FILE` (defaults to `kas/qemu-kirkstone.yaml`)
+- KAS config variable: `KAS_FILE` (defaults to `kas/qemu-wrynose.yaml`)
