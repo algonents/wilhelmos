@@ -45,10 +45,8 @@ WilhelmOS supports two boot modes. **Option 2 is the primary mode** — it runs 
 
 | Project | Repo | Purpose |
 |---------|------|---------|
-| sky_guard | `algonents/sky_guard` | ATM situation display (client + server) |
 | wilhelm_renderer | `../wilhelm_renderer` | Custom 2D OpenGL rendering engine |
 | wilhelm_renderer_imgui | `../wilhelm_renderer_imgui` | Dear ImGui integration for wilhelm_renderer |
-| libasterix | `../libasterix` | ASTERIX message parsing library |
 
 ## Build System
 
