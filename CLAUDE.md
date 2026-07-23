@@ -53,7 +53,7 @@ WilhelmOS supports two boot modes. **Option 2 is the primary mode** — it runs 
 ## Build System
 
 - **KAS** orchestrates the Yocto build. Config: `kas/qemu-kirkstone.yaml`
-- **Upstream layers:** Poky (meta, meta-poky, meta-yocto-bsp) + meta-openembedded (meta-oe), both on kirkstone
+- **Upstream layers:** Poky (meta, meta-poky, meta-yocto-bsp) + meta-openembedded (meta-oe), both pinned to exact kirkstone commit SHAs in `kas/qemu-kirkstone.yaml` (update pins via `git ls-remote`)
 - **Custom layer:** `meta-wilhelmos/` (priority 6)
 - Shared download/sstate dirs live one level up: `../downloads`, `../sstate-cache`
 
@@ -87,15 +87,15 @@ meta-wilhelmos/
     base-files/                 # vconsole.conf (fr_CH keymap, Terminus font)
   recipes-fonts/                # Terminus console font package
   recipes-kernel/               # Kernel config appends (USB, EFI, ext4)
-  recipes-security/             # Sudoers policy (wheel group, passwordless)
+  recipes-security/             # Sudoers policy (wheel group, password required)
   wic/                          # WIC disk image layout
 ```
 
 ## User Setup
 
 - Root is locked (`password = '!'`)
-- Default user: `wilhelmos` (password: `wilhelmos`), member of `wheel` group
-- Wheel group has passwordless sudo via `/etc/sudoers.d/10-wheel`
+- Default user: `wilhelmos` (password: `wilhelmos`), member of `wheel` group — **dev-only credential**; production images must override `EXTRA_USERS_PARAMS`
+- Wheel group has full sudo (password required) via `/etc/sudoers.d/10-wheel`
 
 ## Backlog
 
