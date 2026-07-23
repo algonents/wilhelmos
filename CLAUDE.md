@@ -14,16 +14,6 @@ WilhelmOS is positioned as COTS software under ED-109A Section 12.4. The system 
 - Certification evidence artifacts (SBOM, configuration management records, test results) that map to ED-109A Section 12.4.10 objectives
 - A COTS Software Integrity Assurance Case template (per Section 12.4.11)
 
-### ED-109A Assurance Level Targeting
-
-ED-109A defines six Assurance Levels (AL1 through AL6), mapped to failure condition severity. AL4 has no airborne equivalent and is unique to ground systems.
-
-| AL Level | Viability | Rationale |
-|----------|-----------|-----------|
-| AL5-AL6 | Strong | Statement coverage sufficient (AL5), no guidance needed (AL6). Service experience argument (Section 12.3.4) is sufficient for Linux. |
-| AL4 | Strong | No associated failure condition category. Light objectives. Unique to ground systems. |
-| AL3 | Feasible | Needs decision coverage and more documentation, but no MC/DC. COTS framework (Section 12.4) + service experience carries significant weight. |
-| AL1-AL2 | Not targeted | Requires MC/DC-like structural coverage (Annex A, Table A-7), full independence, and complete traceability. Impractical for the Linux kernel. |
 
 ### Certification Strategy
 
@@ -33,6 +23,32 @@ ED-109A defines six Assurance Levels (AL1 through AL6), mapped to failure condit
 4. **Partitioning** — if WilhelmOS isolates application components, individual components can be assigned different ALs (Section 2.4.1)
 5. **Application software** running on top — where the applicant focuses their full ED-109A lifecycle effort (Sections 4-8)
 6. **PSAA** (Plan for Software Aspects of Approval, Section 11.1) — produced by the applicant, maps WilhelmOS evidence to ED-109A objectives
+
+## User Experience
+
+WilhelmOS supports two boot modes. **Option 2 is the primary mode** — it runs the sky_guard_client situation display, which is the core product.
+
+### Option 1 — TTY mode (server / maintenance)
+- Boot → systemd → auto-login → TUI on framebuffer console
+- PSF bitmap font (Terminus), no GPU required, minimal footprint
+- Used for sky_guard_server (headless) or system maintenance
+
+### Option 2 — Graphical kiosk mode (critical)
+- Boot → systemd → sky_guard_client (fullscreen OpenGL application)
+- **sky_guard_client** is a situation display for ATM built with **wilhelm_renderer** (custom 2D OpenGL engine) + **Dear ImGui** for UI chrome
+- Uses B612Mono TrueType font (aviation-specific, designed by Airbus for cockpit displays)
+- Requires: GPU drivers (Mesa + DRM/KMS), OpenGL, GLFW
+- May need a minimal Wayland compositor (cage) if GLFW cannot run directly on DRM/KMS
+- The application stack: `systemd → [cage →] sky_guard_client → OpenGL → DRM/KMS → display`
+
+### Related Projects
+
+| Project | Repo | Purpose |
+|---------|------|---------|
+| sky_guard | `algonents/sky_guard` | ATM situation display (client + server) |
+| wilhelm_renderer | `../wilhelm_renderer` | Custom 2D OpenGL rendering engine |
+| wilhelm_renderer_imgui | `../wilhelm_renderer_imgui` | Dear ImGui integration for wilhelm_renderer |
+| libasterix | `../libasterix` | ASTERIX message parsing library |
 
 ## Build System
 
