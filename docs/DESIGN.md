@@ -77,20 +77,79 @@ Phase 2 (key management belongs with the secure-boot design).
 ## 4. Phase 1 — Graphical kiosk mode (next)
 
 Today the kiosk mode exists only as documentation; **no recipes implement
-it**. Scope:
+it**.
 
-- Kernel: DRM/KMS config fragment (i915/virtio-gpu for QEMU, target GPU for
-  bare metal).
-- Userspace: Mesa (GL/EGL/GBM), GLFW, freetype/fontconfig, B612Mono font
-  package (aviation display font).
-- Compositor decision: try GLFW directly on DRM/KMS; fall back to the `cage`
-  Wayland kiosk compositor if needed.
+### Compositor decision: cage (decided)
+
+A compositor is required, not optional: **GLFW has no direct DRM/KMS
+backend** — it only supports X11 and Wayland. Running without a compositor
+would mean rewriting wilhelm_renderer's windowing on raw EGL/GBM, which is
+engine work we don't want. So the production stack is:
+
+```
+systemd → cage → sky_guard_client (GLFW-Wayland) → Mesa → DRM/KMS → display
+```
+
+**The production compositor is `cage`** (wlroots-based kiosk compositor),
+packaged via our own recipe. Rationale:
+
+1. **Certification scope (ED-109A §12.4.11 restriction of functionality).**
+   cage is a few thousand lines with exactly one capability: run a single
+   application fullscreen. Weston is the full reference compositor —
+   multiple shells, RDP backend, screen sharing, config surface — of which
+   a kiosk uses a sliver, but all of it ships and all of it must be
+   accounted for in the COTS argument. "The compositor is architecturally
+   incapable of doing anything but display the CWP application" is the
+   assurance sentence we want.
+2. **The kiosk constraint is architectural, not configured.** Weston's
+   kiosk mode is policy in a config file; misconfiguration or changed
+   defaults can surface unintended behavior. cage has nothing to
+   misconfigure — the invariant cannot be configured away.
+3. **Footprint** — smallest binary and dependency set, consistent with the
+   minimal-platform positioning.
+
+Accepted cost: we own the cage (+ wlroots, if not available in our layers)
+recipes — version tracking, CVE watching, and keeping wlroots compatible
+with our wayland/libinput versions. This is deliberate: the maintenance
+cost buys the §12.4.11 argument.
+
+**Bring-up strategy:** initial stack bring-up may use Weston's kiosk-shell
+(already in oe-core, exercised daily by the Yocto ecosystem) as a scaffold
+to de-risk the kernel DRM config, Mesa, and GLFW-Wayland work — so failures
+during bring-up are attributable to our stack, not the compositor recipe.
+Weston is a temporary scaffold only: it must not ship in the production
+image, and the phase is not complete until sky_guard_client runs under
+cage. The cage/wlroots recipe work is easier after the scarthgap migration
+(§3), which is another reason to sequence that migration early.
+
+### Scope
+
+- Kernel: DRM/KMS config fragment (`CONFIG_DRM`, `CONFIG_DRM_VIRTIO_GPU`
+  for QEMU; i915/amdgpu per target hardware for bare metal).
+- `DISTRO_FEATURES += "opengl wayland"`.
+- Userspace: Mesa (GL/EGL/GBM), cage (+ wlroots recipe if needed), GLFW
+  (meta-oe), freetype/fontconfig, B612Mono font package (aviation display
+  font, same recipe pattern as the Terminus font).
 - `sky_guard_client` recipe (cross-compiled; depends on wilhelm_renderer +
-  Dear ImGui).
+  wilhelm_renderer_imgui + libasterix) — expected to be the largest effort.
 - Boot-mode wiring: systemd target per mode (`kiosk.target` /
-  `maintenance.target`), auto-launch service with restart policy, TTY
-  autologin for maintenance mode, shell kept on tty2.
+  `maintenance.target`), cage service auto-launching sky_guard_client with
+  restart policy (per §5), TTY autologin for maintenance mode, shell kept
+  on tty2.
 - Image-size and boot-time evaluation after the GPU stack lands.
+
+### Test strategy (QEMU-first)
+
+The full chain — systemd → cage → GLFW → Mesa → DRM/KMS — is testable in
+QEMU with a virtio-gpu device: the guest runs real Mesa against a real DRM
+device, identical code path to hardware.
+
+- Interactive: `runqemu qemux86-64 gl` (virgl-accelerated OpenGL, window on
+  the host); llvmpipe software rendering as fallback for headless hosts.
+- Automated (feeds Phase 3 CI): headless QEMU + QMP `screendump` for
+  golden-image regression tests of the rendered display.
+- Not covered by QEMU — requires target hardware: real GPU driver quirks
+  (i915/amdgpu), rendering performance, multi-monitor/EDID behavior.
 
 ## 5. Service resilience & resource control (SWIM services)
 

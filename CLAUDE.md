@@ -38,8 +38,8 @@ WilhelmOS supports two boot modes. **Option 2 is the primary mode** — it runs 
 - **sky_guard_client** is a situation display for ATM built with **wilhelm_renderer** (custom 2D OpenGL engine) + **Dear ImGui** for UI chrome
 - Uses B612Mono TrueType font (aviation-specific, designed by Airbus for cockpit displays)
 - Requires: GPU drivers (Mesa + DRM/KMS), OpenGL, GLFW
-- May need a minimal Wayland compositor (cage) if GLFW cannot run directly on DRM/KMS
-- The application stack: `systemd → [cage →] sky_guard_client → OpenGL → DRM/KMS → display`
+- Compositor: **cage** (minimal Wayland kiosk compositor) — required, since GLFW has no direct DRM/KMS backend; chosen over Weston for certification-scope reasons (see docs/DESIGN.md §4)
+- The application stack: `systemd → cage → sky_guard_client → OpenGL → DRM/KMS → display`
 
 ### Related Projects
 

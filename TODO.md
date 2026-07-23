@@ -40,8 +40,8 @@ sky_guard_client is an OpenGL situation display for ATM. It uses wilhelm_rendere
 - [ ] Add GPU/DRM/KMS kernel support (CONFIG_DRM, CONFIG_DRM_I915, CONFIG_DRM_AMDGPU, etc.)
 - [ ] Add Mesa OpenGL drivers to image (meta-oe or custom recipe)
 - [ ] Add GLFW library to image (required by wilhelm_renderer for window/context creation)
-- [ ] Determine if GLFW can run directly on DRM/KMS or needs a Wayland compositor
-- [ ] If compositor needed: add cage (minimal single-app Wayland compositor)
+- [x] Determine if GLFW can run directly on DRM/KMS or needs a Wayland compositor — it cannot (GLFW is X11/Wayland only); compositor required, **cage** chosen (see DESIGN.md §4)
+- [ ] Add cage recipe (+ wlroots if needed); Weston kiosk-shell allowed as bring-up scaffold only, must not ship
 - [ ] Add freetype/fontconfig for TrueType font rendering (if not bundled in wilhelm_renderer)
 - [ ] Ship B612Mono-Regular.ttf font (aviation-specific, used by sky_guard_client)
 - [ ] Create systemd service to auto-launch sky_guard_client fullscreen on boot
