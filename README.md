@@ -1,6 +1,6 @@
 # WilhelmOS
 
-Minimal Linux distribution built with the Yocto Project (kirkstone), targeting
+Minimal Linux distribution built with the Yocto Project (wrynose, 6.0 LTS), targeting
 QEMU x86-64 and bare-metal x86-64.
 
 WilhelmOS aims to be a **pre-hardened COTS platform for AL3–AL5 CNS/ATM ground
@@ -11,8 +11,8 @@ burden with a reproducible build, SBOM output, and hardening evidence. See
 - `MACHINE = "qemux86-64"`
 - `DISTRO = "wilhelmos"` (version 0.1.0)
 - Image: `wilhelmos-image-base`
-- Upstream layers pinned to exact kirkstone commit SHAs (see
-  `kas/qemu-kirkstone.yaml`)
+- Upstream layers pinned to exact wrynose commit SHAs (see
+  `kas/qemu-wrynose.yaml`)
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ burden with a reproducible build, SBOM output, and hardening evidence. See
 ### RHEL 10 host notes
 
 Verified on RHEL 10.2 (bitbake warns that this host is not officially
-validated for kirkstone; the build works with the packages below):
+validated for this Yocto release; the build works with the packages below):
 
 ```bash
 sudo dnf install -y chrpath lz4 rpcgen perl
@@ -54,7 +54,7 @@ sudo dnf install -y chrpath lz4 rpcgen perl
 ## Build
 
 ```bash
-make build          # kas build kas/qemu-kirkstone.yaml
+make build          # kas build kas/qemu-wrynose.yaml
 ```
 
 Downloads and sstate are shared one level above the checkout
@@ -66,7 +66,7 @@ Builds the same image with verbose console/systemd boot logging on the kernel
 cmdline (useful when dd'ing the `.wic` to USB for bare-metal debugging):
 
 ```bash
-kas build kas/qemu-kirkstone.yaml:kas/debug.yaml
+kas build kas/qemu-wrynose.yaml:kas/debug.yaml
 ```
 
 ## Run in QEMU
@@ -88,8 +88,8 @@ Run `make help` for the list: `build`, `run`, `shell`, `clean`, `distclean`.
 
 ## Reproducibility & SBOM
 
-- Upstream layer revisions are pinned in `kas/qemu-kirkstone.yaml`. To update
-  a pin: `git ls-remote <repo-url> refs/heads/kirkstone` and replace the
+- Upstream layer revisions are pinned in `kas/qemu-wrynose.yaml`. To update
+  a pin: `git ls-remote <repo-url> refs/heads/wrynose` and replace the
   `commit:` value.
 - Every build produces an SPDX SBOM:
   `build/tmp/deploy/images/qemux86-64/wilhelmos-image-base-qemux86-64.spdx.tar.zst`
@@ -99,7 +99,7 @@ Run `make help` for the list: `build`, `run`, `shell`, `clean`, `distclean`.
 ## Repository layout
 
 ```
-kas/                  kas build configs (qemu-kirkstone.yaml + debug overlay)
+kas/                  kas build configs (qemu-wrynose.yaml + debug overlay)
 meta-wilhelmos/       custom Yocto layer (distro, image, recipes, wic layout)
 scripts/              helper scripts
 docs/                 design documentation

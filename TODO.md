@@ -11,7 +11,7 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the phased roadmap and sequencing ratio
   - [x] `recipes-core/base-files/wilhelmos-vconsole-conf_1.0.bb`
 - [x] Add `RDEPENDS:${PN} += "sudo"` to `wilhelmos-sudoers.bb`
 - [x] Add `LAYERDEPENDS_wilhelmos = "core openembedded-layer"` to `meta-wilhelmos/conf/layer.conf`
-- [ ] Migrate from kirkstone (EOL April 2026) to wrynose (6.0 LTS, supported until April 2030) — wait for a few wrynose point releases first; see DESIGN.md §3
+- [x] Migrate from kirkstone (EOL April 2026) to wrynose (6.0 LTS, supported until April 2030) — done 2026-07-23; see DESIGN.md §3
 
 ## Medium Priority
 
@@ -68,7 +68,7 @@ WilhelmOS is positioned as COTS software (ED-109A Section 12.4) for AL3-AL5 CNS/
 
 These items produce evidence for Software Configuration Management objectives (Annex A, Table A-8) — configuration identification (7.2.1), baselines and traceability (7.2.2), and archive/retrieval (7.2.7).
 
-- [x] Pin all upstream repos to exact commit SHAs (not branch names) in `kas/qemu-kirkstone.yaml`
+- [x] Pin all upstream repos to exact commit SHAs (not branch names) in the kas config
 - [ ] Archive download sources for offline reproducible builds
 - [x] Enable and verify reproducible builds (`BUILD_REPRODUCIBLE_BINARIES = "1"` asserted; kirkstone has no separate class) — bit-for-bit verification still pending
 - [x] Generate SBOM (Software Bill of Materials) using Yocto's built-in support (`INHERIT += "create-spdx"`)
