@@ -16,7 +16,7 @@ burden with a reproducible build, SBOM output, and hardening evidence. See
 
 ## Prerequisites
 
-- Linux build host (e.g. Ubuntu)
+- Linux build host (e.g. Ubuntu, RHEL)
 - Python 3
 - Yocto build dependencies (gcc, git, xz-utils, etc.)
   - See the official Yocto Project Quick Start for the exact package list.
@@ -25,6 +25,31 @@ burden with a reproducible build, SBOM output, and hardening evidence. See
   ```bash
   pip3 install --user kas
   ```
+
+### RHEL 10 host notes
+
+Verified on RHEL 10.2 (bitbake warns that this host is not officially
+validated for kirkstone; the build works with the packages below):
+
+```bash
+sudo dnf install -y chrpath lz4 rpcgen perl
+```
+
+- `chrpath`, `lz4` (`lz4c`), `rpcgen` are on bitbake's required `HOSTTOOLS`
+  list but not in a default RHEL install (`rpcgen` comes from AppStream).
+- The full `perl` metapackage is required — RHEL's minimal `perl-interpreter`
+  lacks core modules (e.g. `open.pm`), which breaks libxcrypt's configure
+  with a misleading `bad value 'all' for --enable-hashes` error.
+- RHEL has no `pip3` by default; install kas in a venv instead:
+
+  ```bash
+  python3 -m venv ~/.local/share/kas-venv
+  ~/.local/share/kas-venv/bin/pip install kas
+  export PATH="$HOME/.local/share/kas-venv/bin:$PATH"
+  ```
+
+- `runqemu` needs root to set up TAP networking; without it, append `slirp`
+  for user-mode networking (`runqemu qemux86-64 nographic slirp`).
 
 ## Build
 
