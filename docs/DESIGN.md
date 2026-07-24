@@ -121,8 +121,13 @@ tune, so userspace is shared with the QEMU build). `gpu.cfg` adds
 i915/xe/amdgpu as modules plus a SimpleDRM/UEFI-GOP KMS fallback; Intel GPU
 firmware is installed machine-conditionally. The full UEFI → systemd-boot →
 GPT → `root=PARTLABEL` boot chain is validated in QEMU via OVMF (9/9
-kiosk checks through the wic path). Deployment is dd-to-USB; Secure Boot
-must be disabled until the Phase 2 signing design.
+kiosk checks through the wic path). Deployment is USB media: prefer
+`bmaptool copy` of the `.wic.zst` (the build emits `.wic.bmap` — writes
+only mapped blocks and verifies checksums; `dd` of the raw `.wic` works
+but is far slower and unverified). Use a quality USB 3 stick — cheap
+flash sustains ~1-2 MB/s. Secure Boot must be disabled until the Phase 2
+signing design. First bare-metal boot result (Arrow Lake workstation,
+which driver binds i915 vs xe) pending — record here once tested.
 
 Remaining for full kiosk productization (next iterations): sky_guard_client
 recipe, B612Mono font package, kiosk/maintenance systemd target switching,
