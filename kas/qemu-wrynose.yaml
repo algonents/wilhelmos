@@ -10,6 +10,7 @@ target: wilhelmos-image-base
 env:
   DISPLAY: null
   WAYLAND_DISPLAY: null
+  XAUTHORITY: null
   XDG_RUNTIME_DIR: null
   XDG_SESSION_TYPE: null
 
