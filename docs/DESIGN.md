@@ -115,9 +115,19 @@ What validation delivered:
   is enabled so runtime GL loaders find the vendor-neutral
   libEGL/libOpenGL dispatch libraries on the GLX-less system.
 
+**Hardware bring-up (in progress):** the kiosk image also builds for
+`MACHINE = genericx86-64` via the `kas/hw.yaml` overlay (same x86-64-v3
+tune, so userspace is shared with the QEMU build). `gpu.cfg` adds
+i915/xe/amdgpu as modules plus a SimpleDRM/UEFI-GOP KMS fallback; Intel GPU
+firmware is installed machine-conditionally. The full UEFI → systemd-boot →
+GPT → `root=PARTLABEL` boot chain is validated in QEMU via OVMF (9/9
+kiosk checks through the wic path). Deployment is dd-to-USB; Secure Boot
+must be disabled until the Phase 2 signing design.
+
 Remaining for full kiosk productization (next iterations): sky_guard_client
 recipe, B612Mono font package, kiosk/maintenance systemd target switching,
-image-size/boot-time evaluation, bare-metal iGPU bring-up.
+image-size/boot-time evaluation, a pinned production hardware machine
+config once CWP hardware is selected.
 
 ### Compositor decision: cage (decided)
 

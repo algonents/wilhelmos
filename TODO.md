@@ -39,7 +39,7 @@ sky_guard_client is an OpenGL situation display for ATM. It uses wilhelm_rendere
 
 Stack validation is DONE (2026-07-24, see DESIGN.md §4): the wilhelm_renderer_imgui demo runs fullscreen under cage in wilhelmos-image-kiosk, verified in QEMU.
 
-- [x] Add GPU/DRM/KMS kernel support — qemux86-64 kernel 6.18 has CONFIG_DRM_VIRTIO_GPU=y out of the box; bare-metal iGPU configs (i915/amdgpu) still pending
+- [x] Add GPU/DRM/KMS kernel support — virtio built in for QEMU; gpu.cfg adds i915/xe/amdgpu modules + SimpleDRM fallback for bare metal (Intel firmware installed on genericx86-64 via kas/hw.yaml)
 - [x] Add Mesa OpenGL drivers to image (via wilhelm-renderer-demo RDEPENDS: libegl-mesa, libgbm, mesa-megadriver)
 - [x] Add GLFW library to image — not needed as a package: wilhelm_renderer_sys vendors and statically links GLFW 3.4 (Wayland-only via GLRENDERER_BUILD_X11=OFF)
 - [x] Determine if GLFW can run directly on DRM/KMS or needs a Wayland compositor — it cannot (GLFW is X11/Wayland only); compositor required, **cage** chosen (see DESIGN.md §4)
@@ -120,7 +120,7 @@ The applicant needs evidence to satisfy additional COTS objectives (Section 12.4
 Supports verification objectives in Annex A, Tables A-3 through A-7. The level of structural coverage depends on the target AL (Table A-7): decision coverage for AL1-AL2, statement coverage for AL3.
 
 - [ ] Add automated boot-to-login integration tests (QEMU-based CI)
-- [ ] Boot the .wic image in QEMU via OVMF (`runqemu wic ovmf`) to exercise the real UEFI → systemd-boot → GPT chain that ext4 direct-kernel boot skips
+- [x] Boot the .wic image in QEMU via OVMF (`runqemu wic ovmf`) to exercise the real UEFI → systemd-boot → GPT chain — done 2026-07-24, full kiosk validation 9/9 through the UEFI path
 - [ ] Add image size and package manifest regression checks
 - [ ] Implement kernel config verification (`bitbake -c kernel_configcheck`)
 - [ ] Define structural coverage targets appropriate to target AL (Table A-7)
