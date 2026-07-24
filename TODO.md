@@ -37,16 +37,19 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the phased roadmap and sequencing ratio
 
 sky_guard_client is an OpenGL situation display for ATM. It uses wilhelm_renderer (custom 2D engine), Dear ImGui, GLFW, and B612Mono font. This is the core product mode.
 
-- [ ] Add GPU/DRM/KMS kernel support (CONFIG_DRM, CONFIG_DRM_I915, CONFIG_DRM_AMDGPU, etc.)
-- [ ] Add Mesa OpenGL drivers to image (meta-oe or custom recipe)
-- [ ] Add GLFW library to image (required by wilhelm_renderer for window/context creation)
+Stack validation is DONE (2026-07-24, see DESIGN.md §4): the wilhelm_renderer_imgui demo runs fullscreen under cage in wilhelmos-image-kiosk, verified in QEMU.
+
+- [x] Add GPU/DRM/KMS kernel support — qemux86-64 kernel 6.18 has CONFIG_DRM_VIRTIO_GPU=y out of the box; bare-metal iGPU configs (i915/amdgpu) still pending
+- [x] Add Mesa OpenGL drivers to image (via wilhelm-renderer-demo RDEPENDS: libegl-mesa, libgbm, mesa-megadriver)
+- [x] Add GLFW library to image — not needed as a package: wilhelm_renderer_sys vendors and statically links GLFW 3.4 (Wayland-only via GLRENDERER_BUILD_X11=OFF)
 - [x] Determine if GLFW can run directly on DRM/KMS or needs a Wayland compositor — it cannot (GLFW is X11/Wayland only); compositor required, **cage** chosen (see DESIGN.md §4)
-- [ ] Add cage recipe (+ wlroots if needed); Weston kiosk-shell allowed as bring-up scaffold only, must not ship
-- [ ] Add freetype/fontconfig for TrueType font rendering (if not bundled in wilhelm_renderer)
+- [x] Add cage recipe (+ wlroots) — wlroots 0.19.3 + cage recipes in recipes-graphics/; no Weston scaffold was needed
+- [x] Add freetype for TrueType rendering — vendored/statically linked in wilhelm_renderer_sys; fontconfig not needed
 - [ ] Ship B612Mono-Regular.ttf font (aviation-specific, used by sky_guard_client)
-- [ ] Create systemd service to auto-launch sky_guard_client fullscreen on boot
-- [ ] Evaluate image size impact (Mesa + GPU drivers + GLFW + fonts vs base image)
-- [ ] Cross-compile sky_guard_client + wilhelm_renderer for the target (Yocto SDK or cargo-cross)
+- [x] Create systemd service to auto-launch the kiosk app fullscreen on boot (wilhelmos-kiosk-session / cage-kiosk.service; runs the validation demo — switch to sky_guard_client later)
+- [ ] Evaluate image size impact (Mesa + GPU drivers + fonts vs base image)
+- [ ] Cross-compile sky_guard_client for the target (wilhelm_renderer cross-compile proven by the demo recipe)
+- [ ] Merge + publish the feat/kiosk-validation crate changes (version bumps, crates.io), then switch wilhelm-renderer-demo to crate:// fetching
 
 ### Option 1 — TTY mode (server / maintenance)
 
@@ -56,7 +59,7 @@ Used for sky_guard_server (headless, no GPU) or system maintenance access.
 - [ ] Auto-launch TUI or shell from user profile
 - [ ] Evaluate PSF fonts for console use (Terminus, Spleen)
 - [ ] Set framebuffer resolution via kernel `video=` parameter
-- [ ] Keep login shell on tty2 (`Alt+F2`) for maintenance access when running kiosk mode
+- [x] Keep login shell on tty2 (`Alt+F2`) for maintenance access when running kiosk mode (getty@tty2 enabled by wilhelmos-kiosk-session)
 
 ---
 

@@ -84,10 +84,38 @@ little real protection while complicating development; activating it is part
 of the Phase 2 integrity design. Module signing is likewise deferred to
 Phase 2 (key management belongs with the secure-boot design).
 
-## 4. Phase 1 — Graphical kiosk mode (next)
+## 4. Phase 1 — Graphical kiosk mode
 
-Today the kiosk mode exists only as documentation; **no recipes implement
-it**.
+**Status: stack validation DONE (2026-07-24).** Phase 1 was deliberately
+scoped to validating that *any application built with wilhelm_renderer +
+wilhelm_renderer_imgui runs seamlessly on WilhelmOS* — packaging
+`sky_guard_client` itself is deferred until the stack is proven. The
+validation vehicle is `wilhelm-renderer-demo`: the imgui `demo_kiosk`
+example packaged as a recipe and run fullscreen under cage
+(`wilhelmos-image-kiosk`, boots to `graphical.target`, maintenance getty on
+tty2). Verified end to end in QEMU: cage + seatd active, demo rendering
+(QMP screendump golden check), no crashes or restarts.
+
+What validation delivered:
+
+- **Recipes** (meta-wilhelmos/recipes-graphics/): wlroots 0.19.3, cage
+  (post-0.2.1 master pin for wlroots-0.19, plus a backported guard for
+  pre-commit fullscreen requests), `wilhelmos-kiosk-session` (systemd
+  service, dedicated `kiosk` user), `wilhelm-renderer-demo` (cargo recipe
+  building the example from git branches with crates.io deps vendored).
+- **Session model: seatd, not logind.** PAM is not in DISTRO_FEATURES; the
+  cage service runs as a dedicated system user with `LIBSEAT_BACKEND=seatd`.
+  Revisit only if a logind session becomes necessary.
+- **Upstream crate changes** (branch `feat/kiosk-validation`, to be merged +
+  published): `Window::new_fullscreen` API, `GLRENDERER_BUILD_X11` switch
+  (Wayland-only builds need no X11 headers), `GLRENDERER_LINK_GL` switch
+  (glad loads GL at runtime; no libGL link on GLX-less Mesa).
+- **x11 opted out distro-wide** (`DISTRO_FEATURES_OPTED_OUT`): no GLX/X11
+  code paths in the image — restriction of functionality, §12.4.11.
+
+Remaining for full kiosk productization (next iterations): sky_guard_client
+recipe, B612Mono font package, kiosk/maintenance systemd target switching,
+image-size/boot-time evaluation, bare-metal iGPU bring-up.
 
 ### Compositor decision: cage (decided)
 
