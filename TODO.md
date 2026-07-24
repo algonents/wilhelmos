@@ -95,7 +95,7 @@ Safety monitoring allows the monitored software to be assigned the AL associated
 - [ ] Enable hardware watchdog timer support (kernel + systemd `RuntimeWatchdogSec`) — Phase 2, see DESIGN.md §6
 - [ ] Configure systemd service restart policies for critical services — Phase 2
 - [x] Add persistent logging to survive reboots (`Storage=persistent` via `wilhelmos-journald-conf` + `VOLATILE_LOG_DIR = "no"`)
-- [ ] Consider A/B partition scheme for safe updates and rollback (supports Section 2.5.4 cutover/hot swapping)
+- [ ] Implement the two-path update architecture (decided, see DESIGN.md §6): A/B platform slots ("OS patching", infrequent) + independent application slot pair (frequent, emergency-capable), atomic image-based with rollback (Section 2.5.4); candidate tooling RAUC
 
 ### COTS Evidence Package (ED-109A Section 12.4)
 

@@ -307,8 +307,55 @@ piecemeal would force rework:
 - systemd `PACKAGECONFIG` audit / service stripping for the final package
   set.
 
+### Update strategy: two independent update paths (decided)
+
+Deployed devices are updated through **atomic, image-based updates only** —
+never on-device package management. A package manager on the target means a
+mutable rootfs, and "what exactly is running on that box" stops having a
+crisp answer; the SBOM/baseline evidence chain collapses. Every deployed
+state must be a complete, versioned, reproducible, SBOM'd artifact.
+
+There are exactly **two update paths, with different cadences, and they
+must be independent of each other**:
+
+1. **OS patching (platform)** — the WilhelmOS platform image (kernel,
+   systemd, Mesa, cage, base userspace). Infrequent (planned maintenance
+   windows, security backports, LTS migrations). Delivered into the **A/B
+   rootfs slots**: write the inactive slot, switch, reboot; a failed boot
+   rolls back automatically (ED-109A §2.5.4 cutover/hot-swap).
+2. **Application update** — sky_guard and its assets. Much more frequent
+   (several times a year, including emergency bug fixes). The application
+   lives on its **own dedicated partition/slot pair**, delivered as its own
+   small, signed, versioned bundle. An application update touches only the
+   application slots — the platform partitions are not written, and the
+   platform baseline (and every piece of certification evidence attached to
+   it) is *demonstrably* unchanged. The same A/B + rollback semantics apply
+   at the application level.
+
+Independence is the load-bearing property, in both directions: an emergency
+application fix must be deployable without reopening the platform's
+configuration baseline (no re-verification of the COTS platform for an app
+change — the §2.4.1 partitioning argument extended to change management),
+and an OS patch must be deployable without touching the qualified
+application version. Version compatibility between the two is managed
+explicitly (a small platform-ABI/interface contract recorded per release —
+the compositor protocol, runtime libs the app links, systemd interface),
+so each side can state which versions of the other it supports.
+
+Candidate tooling: **RAUC** (first choice — native A/B semantics,
+multi-slot bundles cover the app partition, signature verification,
+Yocto integration via meta-rauc) or swupdate. Decision falls with the
+partition-layout design since bundle format and slot map are coupled.
+
+During development none of this applies: the inner loop is sstate-cached
+image rebuilds (minutes) and `devtool deploy-target` (seconds, pushes a
+recipe's output onto a running dev target over SSH) — dev images carry
+sshd; production images do not.
+
 Sequencing: Phase 1 fixes the package/service set → Phase 2 freezes the
-partition and integrity architecture around it.
+partition, update and integrity architecture around it (the A/B slot map,
+the application partition, dm-verity sealing and the update bundle format
+are one coupled decision).
 
 ## 7. Phase 3 — ED-109A evidence package
 
