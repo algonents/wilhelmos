@@ -80,13 +80,18 @@ meta-wilhelmos/
     layer.conf                  # Layer registration
     distro/wilhelmos.conf       # Distro policy, features, user setup
   recipes-core/
-    images/                     # wilhelmos-image-base image recipe
+    images/                     # wilhelmos-image-base + wilhelmos-image-kiosk
     busybox/                    # Disable busybox syslog (journald replaces it)
     base-files/                 # vconsole.conf (fr_CH keymap, Terminus font)
+    systemd/                    # Persistent journald drop-in
   recipes-fonts/                # Terminus console font package
-  recipes-kernel/               # Kernel config appends (USB, EFI, ext4)
+  recipes-graphics/
+    wlroots/                    # wlroots 0.19 (cage dependency)
+    cage/                       # cage compositor + wilhelmos-kiosk-session service
+    wilhelm-renderer/           # wilhelm_renderer_imgui demo app (cargo recipe)
+  recipes-kernel/               # Kernel config appends (USB/EFI/ext4 + hardening)
   recipes-security/             # Sudoers policy (wheel group, password required)
-  wic/                          # WIC disk image layout
+  files/wic/                    # WIC disk image layouts (production + debug)
 ```
 
 ## User Setup
