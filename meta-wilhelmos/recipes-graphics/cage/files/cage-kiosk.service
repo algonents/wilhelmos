@@ -22,6 +22,9 @@ TTYReset=yes
 TTYVHangup=yes
 TTYVTDisallocate=yes
 UtmpIdentifier=tty1
+# seatd.service is Type=simple, so After= does not imply its socket exists
+# yet; gate on actual readiness (up to 5s) to avoid a first-boot restart.
+ExecStartPre=/bin/sh -c 'n=0; while [ ! -S /run/seatd.sock ] && [ $n -lt 50 ]; do sleep 0.1; n=$((n+1)); done'
 ExecStart=/usr/bin/cage -ds -- /usr/bin/wilhelm-imgui-demo
 Restart=on-failure
 RestartSec=2

@@ -27,9 +27,9 @@ SRC_URI = " \
     git://github.com/algonents/wilhelm_renderer.git;protocol=https;branch=feat/kiosk-validation;name=wilhelm_renderer;destsuffix=wr-deps/wilhelm_renderer;type=git-dependency \
     git://github.com/algonents/wilhelm_renderer.git;protocol=https;branch=feat/kiosk-validation;name=wilhelm_renderer_sys;destsuffix=wr-deps/wilhelm_renderer/wilhelm_renderer_sys;subpath=wilhelm_renderer_sys;type=git-dependency \
 "
-SRCREV_imgui = "28b9d6215398dfdbd0a4c40c4fc3a063e9e2bc50"
-SRCREV_wilhelm_renderer = "77665f9c66e37676eb5cc11a20f630bc8bbb01b1"
-SRCREV_wilhelm_renderer_sys = "77665f9c66e37676eb5cc11a20f630bc8bbb01b1"
+SRCREV_imgui = "181ab8593bf9c108b6fe6c49a36f6ca9d92a118c"
+SRCREV_wilhelm_renderer = "6860cd5f2475c05ca3aa3549035360bf2cd29106"
+SRCREV_wilhelm_renderer_sys = "6860cd5f2475c05ca3aa3549035360bf2cd29106"
 SRCREV_FORMAT = "imgui_wilhelm_renderer"
 
 PV = "0.9.0+git"
@@ -45,13 +45,13 @@ DEPENDS = " \
     wayland \
     wayland-protocols \
     libxkbcommon \
-    virtual/libgl \
     virtual/egl \
 "
 
 # Wayland-only kiosk target: drop the GLFW X11 backend (and with it the
 # need for X11 headers in the sysroot).
 export GLRENDERER_BUILD_X11 = "OFF"
+export GLRENDERER_LINK_GL = "OFF"
 
 do_compile() {
     oe_cargo_build --example demo_kiosk
@@ -67,8 +67,8 @@ do_install() {
 RDEPENDS:${PN} = " \
     wayland \
     libxkbcommon \
+    libglvnd \
     libegl-mesa \
-    libgl-mesa \
     libgbm \
     mesa-megadriver \
 "

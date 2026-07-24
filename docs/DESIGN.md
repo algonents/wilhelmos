@@ -111,7 +111,9 @@ What validation delivered:
   (Wayland-only builds need no X11 headers), `GLRENDERER_LINK_GL` switch
   (glad loads GL at runtime; no libGL link on GLX-less Mesa).
 - **x11 opted out distro-wide** (`DISTRO_FEATURES_OPTED_OUT`): no GLX/X11
-  code paths in the image — restriction of functionality, §12.4.11.
+  code paths in the image — restriction of functionality, §12.4.11. GLVND
+  is enabled so runtime GL loaders find the vendor-neutral
+  libEGL/libOpenGL dispatch libraries on the GLX-less system.
 
 Remaining for full kiosk productization (next iterations): sky_guard_client
 recipe, B612Mono font package, kiosk/maintenance systemd target switching,
