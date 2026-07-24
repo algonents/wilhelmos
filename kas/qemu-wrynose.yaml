@@ -5,6 +5,14 @@ machine: qemux86-64
 distro: wilhelmos
 target: wilhelmos-image-base
 
+# kas sanitizes the environment; pass the display/session variables through
+# so graphical runqemu (sdl/gtk windows) can reach the desktop session.
+env:
+  DISPLAY: null
+  WAYLAND_DISPLAY: null
+  XDG_RUNTIME_DIR: null
+  XDG_SESSION_TYPE: null
+
 # Upstream repos are pinned to exact commits for reproducible builds
 # (ED-109A Section 7 configuration management).
 # From Yocto 5.3 onward there is no combined poky repository; the build
