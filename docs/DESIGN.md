@@ -662,6 +662,29 @@ Existing precedent in the same spirit: production images must override
 provides the mechanism and a dev default; the integrator owns the
 production value.
 
+### Application framework: wilhelmos_kiosk (decided 2026-07-25)
+
+Above the platform contracts sits optional **application-layer tooling**:
+[`wilhelmos_kiosk`](https://github.com/algonents/wilhelmos_kiosk), an
+opinionated Rust framework crate (lifecycle trait, owned frame loop,
+typed input events, ImGui guardrails, predefined chrome components —
+clock, status bar; deliberately no terminal) that integrators can use
+*or omit* when building their kiosk application. Key boundary decisions,
+recorded in that repo's `docs/DESIGN.md`:
+
+- **Pure library, in-process, link-time composition.** Nothing in
+  WilhelmOS changes: a wilhelmos_kiosk app is an ordinary `kiosk-app`
+  package satisfying the two contracts above. The platform remains
+  app-framework-neutral; cage stays single-surface.
+- **Certification framing**: wilhelmos_kiosk is COTS *library* evidence
+  (§12.4) inside the applicant's application scope — unlike the platform
+  layer boundary, it does not partition assurance. Its robustness posture
+  is supervised: panic → logged → nonzero exit → the cage-kiosk unit's
+  `Restart=on-failure` (§2.4.3 story unchanged).
+- Runtime plugin loading ("certified shell binary + customer plugin")
+  was considered and deferred; the trait surface is kept FFI-promotable
+  should that model become commercially decisive.
+
 ## 8. Phase 3 — ED-109A evidence package
 
 - PSAA template (Section 11.1) mapping WilhelmOS artifacts to objectives.
