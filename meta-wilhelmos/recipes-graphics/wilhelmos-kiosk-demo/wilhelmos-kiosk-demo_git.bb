@@ -1,7 +1,8 @@
 SUMMARY = "WilhelmOS reference kiosk application"
-DESCRIPTION = "Fullscreen wilhelm_renderer + Dear ImGui demo application: \
-validates the WilhelmOS graphical kiosk stack end to end and serves as \
-the worked packaging example for integrator kiosk applications."
+DESCRIPTION = "Fullscreen demo application built on the wilhelmos_kiosk \
+application framework: validates the WilhelmOS graphical kiosk stack end \
+to end and serves as the worked packaging example for integrator kiosk \
+applications."
 HOMEPAGE = "https://github.com/algonents/wilhelmos-kiosk-demo"
 # MIT (crates + Dear ImGui) with statically linked vendored GLFW (Zlib) and
 # FreeType (FTL)
@@ -13,10 +14,10 @@ inherit cargo cargo-update-recipe-crates pkgconfig features_check
 REQUIRED_DISTRO_FEATURES = "wayland opengl"
 
 SRC_URI = "git://github.com/algonents/wilhelmos-kiosk-demo.git;protocol=https;branch=master"
-# v0.1.0 tag
-SRCREV = "f5b2d85357befd5f0b213f11a607853493c0dd71"
+# v0.2.0 tag
+SRCREV = "61930c3a8c7e25a0ab30475a10d14a74cd187222"
 
-PV = "0.1.0"
+PV = "0.2.0"
 
 require ${BPN}-crates.inc
 
