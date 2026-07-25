@@ -1,6 +1,6 @@
 # WilhelmOS Design & Phased Roadmap
 
-Status: living document. Last updated: 2026-07-23.
+Status: living document. Last updated: 2026-07-25.
 
 ## 1. Purpose & positioning
 
@@ -126,11 +126,70 @@ kiosk checks through the wic path). Deployment is USB media: prefer
 only mapped blocks and verifies checksums; `dd` of the raw `.wic` works
 but is far slower and unverified). Use a quality USB 3 stick — cheap
 flash sustains ~1-2 MB/s. Secure Boot must be disabled until the Phase 2
-signing design. First bare-metal boot result (Arrow Lake workstation,
-which driver binds i915 vs xe) pending — record here once tested.
+signing design.
+
+**First bare-metal boot (Arrow Lake workstation, 2026-07-25).** Driver
+question answered: the Core Ultra 7 265K iGPU (device 8086:7d67) binds
+**i915** (not xe) on kernel 6.18, display version 14 (Meteor Lake-class
+display block); Mesa 26.0.5 iris reports "Intel(R) Graphics (ARL)" with
+GLES 3.2 — full hardware acceleration, all GuC/HuC/DMC firmware loaded.
+The boot itself failed its purpose, though: cage showed only a cursor on
+a black screen, no demo app. Post-mortem from the persistent journal:
+
+1. SimpleDRM registers `card0` (the UEFI-GOP firmware framebuffer)
+   within the first second of boot. i915 is a **module**, and on the
+   slow USB stick udev coldplug + firmware loading delayed its probe to
+   ~150s after kernel start.
+2. `cage-kiosk.service` started 12s *before* i915 bound. wlroots
+   enumerated one GPU (SimpleDRM), found no hardware EGL on it, refused
+   software GL ("Software rendering detected"), and fell back to its
+   pixman renderer — hence the software-composited cursor.
+3. SimpleDRM exposes no **render node** (`/dev/dri/renderD*`), so the
+   demo client couldn't create any EGL device either ("failed to create
+   dri2 screen") — no triangle.
+4. When i915 finally bound, wlroots hotplugged `card1`, modeset the
+   monitor (proving the hardware path worked), but the session was
+   already built around the pixman/SimpleDRM renderer and every atomic
+   commit on the new output failed with `Device or resource busy` —
+   wedged until reboot. A wedged cage also swallows VT-switch keys, so
+   the maintenance console appeared dead even though `getty@tty2` was
+   healthy.
+
+Fixes wired back into the tree:
+
+- `cage-kiosk.service` gains a second `ExecStartPre` gate (mirroring the
+  seatd-socket wait): poll up to 60s for a `/dev/dri/renderD*` node —
+  only native GPU drivers create render nodes, so this is a reliable
+  "real GPU is ready" signal — then proceed anyway, preserving the
+  SimpleDRM fallback on unsupported GPUs. `WLR_RENDERER_ALLOW_SOFTWARE=1`
+  is set so that fallback actually yields a llvmpipe session instead of
+  wlroots refusing to start (inert when a hardware GL device exists).
+- `gpu.cfg` adds `CONFIG_INTEL_MEI`/`_ME`/`_GSC_PROXY`: the journal
+  showed `GT1: GSC proxy handler failed to init` caused by the missing
+  MEI GSC proxy component (content-protection/firmware handshake path —
+  display and GL are unaffected, but the dmesg *ERROR* should be clean).
+
+**Re-test (same hardware, 2026-07-25): validated.** With the fixes above
+the machine boots straight into the fullscreen `wilhelm-imgui-demo`
+proof-of-concept app (hardware GL on i915; sky_guard_client itself does
+not exist yet), and Ctrl-Alt-F2 switches to the maintenance getty as
+designed. The kiosk boot path — `systemd → cage → client → OpenGL →
+DRM/KMS` — is confirmed end-to-end on bare metal.
+
+Debugging technique worth keeping: journald is persistent on WilhelmOS,
+so a failed bare-metal boot can be analyzed offline by mounting the USB
+stick read-only on the build host and pointing journalctl at it
+(`journalctl -D <mount>/var/log/journal --list-boots`, then `-b0 -u
+cage-kiosk` / `-k`). No serial cable or working console needed. Known
+log noise on this hardware: `serial-getty@ttyS0` restart-loops because
+the board has no usable UART (`SERIAL_CONSOLES` comes from oe-core's
+x86-base.inc); disabling serial consoles in production variants is
+already on the TODO backlog.
 
 Remaining for full kiosk productization (next iterations): sky_guard_client
 recipe, B612Mono font package, kiosk/maintenance systemd target switching,
+the customer composition contracts (`KIOSK_APP` image variable +
+`/usr/libexec/kiosk-app` session exec path — see §7),
 image-size/boot-time evaluation, a pinned production hardware machine
 config once CWP hardware is selected.
 
@@ -322,7 +381,10 @@ piecemeal would force rework:
 - systemd `PACKAGECONFIG` audit / service stripping for the final package
   set.
 
-### Update strategy: two independent update paths (decided)
+### Update strategy: monolithic equipment baseline (decided 2026-07-25)
+
+*Supersedes the "two independent update paths" decision of 2026-07-23;
+the superseded design is kept below as the documented fallback.*
 
 Deployed devices are updated through **atomic, image-based updates only** —
 never on-device package management. A package manager on the target means a
@@ -330,37 +392,104 @@ mutable rootfs, and "what exactly is running on that box" stops having a
 crisp answer; the SBOM/baseline evidence chain collapses. Every deployed
 state must be a complete, versioned, reproducible, SBOM'd artifact.
 
-There are exactly **two update paths, with different cadences, and they
-must be independent of each other**:
+Within that principle there is exactly **one update path**: platform and
+application ship as a single monolithic image. A new application version
+*is* a new equipment software baseline, delivered as a complete signed
+image into the **A/B rootfs slots** (write the inactive slot, switch,
+reboot; failed boot rolls back automatically — ED-109A §2.5.4
+cutover/hot-swap). This holds for every change, from an LTS kernel
+migration down to an emergency one-line application fix.
 
-1. **OS patching (platform)** — the WilhelmOS platform image (kernel,
-   systemd, Mesa, cage, base userspace). Infrequent (planned maintenance
-   windows, security backports, LTS migrations). Delivered into the **A/B
-   rootfs slots**: write the inactive slot, switch, reboot; a failed boot
-   rolls back automatically (ED-109A §2.5.4 cutover/hot-swap).
-2. **Application update** — sky_guard and its assets. Much more frequent
-   (several times a year, including emergency bug fixes). The application
-   lives on its **own dedicated partition/slot pair**, delivered as its own
-   small, signed, versioned bundle. An application update touches only the
-   application slots — the platform partitions are not written, and the
-   platform baseline (and every piece of certification evidence attached to
-   it) is *demonstrably* unchanged. The same A/B + rollback semantics apply
-   at the application level.
+**Rationale — the equipment concept.** An ATM equipment (a "constituent"
+in EU-regulation terms) is a unit of accountability: a
+configuration-controlled whole — hardware + OS + application — with a
+declared intended function, performance and interfaces, for which one
+party stands behind the complete stack. The ANSP's safety case references
+*equipment X at baseline Y*, and that reference is only meaningful if the
+baseline pins everything that affects behavior. The deployed unit of
+configuration is therefore the whole software load; monolithic updates
+are simply the update-mechanism expression of what an equipment *is*.
+This is the established practice in every comparable regulated domain:
+avionics (ARINC 665 complete loads, one part number per load), medical
+devices (whole-device software releases), network equipment (single
+versioned firmware images), and — at consumer scale — ChromeOS (A/B
+full-image autoupdate with verified boot, the origin of dm-verity).
+Split update models (Android system-image + APKs, balenaOS/Torizon
+host-OS + app containers) exist to serve a different problem: platform
+and applications owned by *different release authorities* that cannot
+coordinate. WilhelmOS integrators compose application and platform at
+build time and ship one certified appliance — that problem does not
+exist here (see §7: split at build time via layers, monolithic at
+deploy time).
 
-Independence is the load-bearing property, in both directions: an emergency
-application fix must be deployable without reopening the platform's
-configuration baseline (no re-verification of the COTS platform for an app
-change — the §2.4.1 partitioning argument extended to change management),
-and an OS patch must be deployable without touching the qualified
-application version. Version compatibility between the two is managed
-explicitly (a small platform-ABI/interface contract recorded per release —
-the compositor protocol, runtime libs the app links, systemd interface),
-so each side can state which versions of the other it supports.
+**What this buys, concretely:**
 
-Candidate tooling: **RAUC** (first choice — native A/B semantics,
-multi-slot bundles cover the app partition, signature verification,
-Yocto integration via meta-rauc) or swupdate. Decision falls with the
-partition-layout design since bundle format and slot map are coupled.
+- One artifact, one version string, one SBOM, one signature, one slot
+  pair, one updater configuration. "What is running on that box" has a
+  one-line answer.
+- Phase 2 collapses: two rootfs slots with one dm-verity tree each — no
+  app partition pair, no second slot state machine, no second signing
+  chain, no app-slot mount/verify ordering at boot. The application
+  binary sits *under* the same verity seal as the platform.
+- You test what you ship: every release is the exact integration-tested
+  artifact. No (platform × application) compatibility matrix, no
+  platform-ABI contract to author, version and enforce.
+
+**Independence of evidence replaces independence of partitions.** The
+property the two-path design protected — an application fix must not
+reopen the platform's configuration baseline — is retained, but carried
+by reproducibility instead of by the partition map: when a release
+changes only the application, buildhistory and the per-package SBOM show
+every platform package bit-identical between the two images. Change
+impact analysis becomes a manifest diff ("1 package of ~300 changed,
+hashes attached") — the same "demonstrably unchanged" claim, with
+easier-to-audit evidence.
+
+**Failure modes of the rejected install path** (recorded so the decision
+stays auditable): independently-updated applications reintroduce ABI
+drift against platform libraries (glibc/Mesa/wayland versions — hence
+the contract + test matrix); a second A/B state machine that must be
+exactly as robust as the first; an ill-defined application-level health
+signal for rollback (the worst kiosk failure is *plausible but wrong*
+display output, which no health check catches); a boot-time
+mount/verify/ordering contract for the app slot (compare the
+SimpleDRM-vs-i915 race in §4 — same bug class); dual signing chains
+with anti-downgrade policy in two places; bundle scope creep quietly
+eroding the "platform unchanged" claim; and fleet version skew
+fragmenting the §12.3.4 service-experience evidence across (platform,
+app) combinations.
+
+**Costs accepted:** every application release redelivers the full image
+(hundreds of MB rather than a ~20 MB bundle) — irrelevant for
+maintenance-window delivery via USB or site network a few times a year;
+and every release re-exercises the full boot chain — mitigated by A/B
+rollback. These are the revisit triggers: update cadence far beyond a
+few per year, delivery over constrained links to many unattended sites,
+or multiple applications with genuinely independent release authorities
+would reopen this decision.
+
+**Reversibility hedge (decided):** the Phase 2 partition map **reserves
+an unused application slot pair in the GPT** anyway. A/B updates write
+partitions but never repartition; without reserved slots, a later
+migration to split updates would mean re-provisioning every deployed
+device on site. With them, the migration becomes a software/process
+change deliverable through the normal update path. Cost: disk space on
+hardware where disk is free.
+
+**Fallback (superseded 2026-07-25): two independent update paths** —
+platform image into the A/B rootfs slots; application as its own small,
+signed, versioned bundle on a dedicated partition/slot pair with its own
+A/B + rollback semantics, plus an explicitly-managed platform-ABI
+compatibility contract recorded per release (compositor protocol,
+runtime libs, systemd interface). Retained as the documented alternative
+should the revisit triggers above materialize.
+
+Candidate tooling: **RAUC** (first choice — native full-image A/B
+semantics, X.509-signed dm-verity bundles, systemd-boot boot-counting
+support, Yocto integration via meta-rauc; an application slot class can
+be added to its slot configuration later if the fallback is ever
+activated) or swupdate. Decision falls with the partition-layout design
+since bundle format and slot map are coupled.
 
 During development none of this applies: the inner loop is sstate-cached
 image rebuilds (minutes) and `devtool deploy-target` (seconds, pushes a
@@ -372,7 +501,54 @@ partition, update and integrity architecture around it (the A/B slot map,
 the application partition, dm-verity sealing and the update bundle format
 are one coupled decision).
 
-## 7. Phase 3 — ED-109A evidence package
+## 7. Platform/application composition (customer layers)
+
+Any WilhelmOS integrator must be able to bundle their own kiosk
+application, utilities and services **without touching WilhelmOS
+recipes**. The mechanism is Yocto layering, and the layer boundary is
+deliberately also the certification boundary:
+
+- **meta-wilhelmos is a pure platform layer** — distro policy, kernel
+  and hardening config, journald policy, cage/seatd and the kiosk
+  session machinery. It never names a customer application.
+  `wilhelm-renderer-demo` is the *reference application*: the platform's
+  own GPU-stack validation vehicle and the worked example integrators
+  copy — not a product component.
+- **The integrator brings their own layer** (`meta-<customer>`) holding
+  their application recipes, additional utilities/services (§5 patterns
+  apply to those services), and their image recipe, stacked via their
+  own kas config: oe-core + meta-wilhelmos + `meta-<customer>`. A
+  **WilhelmOS release tag is the pinned COTS configuration baseline**
+  (§12.4) — the integrator pins it exactly as WilhelmOS pins oe-core.
+  Everything in the customer layer is the applicant's own ED-109A
+  scope. Nested configuration control, one accountable party per level,
+  consolidating at the equipment boundary (§6).
+
+Two composition contracts make this concrete (**to implement** — both
+points are currently hardcoded to the reference app):
+
+1. **Image composition.** The kiosk image consumes the application
+   through a variable — `IMAGE_INSTALL:append = " … ${KIOSK_APP}"`,
+   `KIOSK_APP ?= "wilhelm-renderer-demo"` — so a customer image recipe
+   just `require`s the platform kiosk image and sets `KIOSK_APP` (plus
+   whatever utilities/services it adds). Today
+   `wilhelmos-image-kiosk.bb` names `wilhelm-renderer-demo` directly.
+2. **Session exec contract.** `cage-kiosk.service` execs a stable path,
+   `/usr/libexec/kiosk-app`, which the application package must provide
+   (symlink or wrapper it installs); build-time enforcement via a
+   `virtual/kiosk-app` PROVIDES so exactly one package claims the role.
+   Today the service execs `/usr/bin/wilhelm-imgui-demo` directly. This
+   path is the seed of the platform/application interface description,
+   and it makes the monolithic→split migration hedge (§6) invisible to
+   the session machinery: the service execs the same path whether the
+   application is baked into the rootfs or mounted from an app slot.
+
+Existing precedent in the same spirit: production images must override
+`EXTRA_USERS_PARAMS` to replace the dev credential (§3) — platform
+provides the mechanism and a dev default; the integrator owns the
+production value.
+
+## 8. Phase 3 — ED-109A evidence package
 
 - PSAA template (Section 11.1) mapping WilhelmOS artifacts to objectives.
 - Software Configuration Index (Section 11.16) generated from the pinned
@@ -383,7 +559,7 @@ are one coupled decision).
   `kernel_configcheck` gate — turning the Phase 0 verification steps into
   repeatable automated evidence.
 
-## 8. Sequencing rationale
+## 9. Sequencing rationale
 
 Hygiene and reproducibility came first because every later claim — "this
 image is hardened", "this service set is minimal", "this binary matches this
