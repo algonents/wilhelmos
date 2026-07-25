@@ -375,8 +375,8 @@ whole session after 2 s — the platform's first, crude layer of ED-109A
 Note what the ExecStart does *not* say: any application name.
 `/usr/libexec/kiosk-app` is a stable path contract (DESIGN.md §7) —
 whichever application package the image installs provides it. On this
-image, `KIOSK_APP ?= "wilhelmos-kiosk-demo"` (the reference app from
-`algonents/wilhelmos-kiosk-demo`); a customer image overrides `KIOSK_APP`
+image, `KIOSK_APP ?= "kiosk-app-demo"` (the reference app from
+`algonents/kiosk-app-demo`); a customer image overrides `KIOSK_APP`
 with their own package (eventually, sky_guard_client) and nothing in the
 session machinery changes.
 

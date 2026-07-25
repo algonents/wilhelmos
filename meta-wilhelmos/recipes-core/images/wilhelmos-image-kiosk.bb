@@ -9,7 +9,7 @@ require wilhelmos-image-base.bb
 # require this image and override KIOSK_APP with their own application
 # package, which must provide /usr/libexec/kiosk-app (virtual/kiosk-app).
 # Default: the WilhelmOS reference application.
-KIOSK_APP ?= "wilhelmos-kiosk-demo"
+KIOSK_APP ?= "kiosk-app-demo"
 
 IMAGE_INSTALL:append = " cage seatd wilhelmos-kiosk-session ${KIOSK_APP}"
 

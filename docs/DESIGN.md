@@ -648,10 +648,10 @@ Two composition contracts make this concrete (implemented 2026-07-25):
    app slot.
 
 The reference application is moving to its own repo
-(`wilhelmos-kiosk-demo`, the integrator's worked example — standalone
+(`kiosk-app-demo`, the integrator's worked example — standalone
 binary crate, committed lockfile, release tags, zero git dependencies in
 tagged releases). A staged recipe
-(`recipes-graphics/wilhelmos-kiosk-demo/*.bb.staged`, kept out of
+(`recipes-graphics/kiosk-app-demo/*.bb.staged`, kept out of
 bitbake's parse path until its repo exists) replaces the current
 triple-git-checkout `wilhelm-renderer-demo` recipe once the renderer
 crates are published and v0.1.0 is tagged; activation steps are listed
