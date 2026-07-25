@@ -312,6 +312,10 @@ WilhelmOS must run ATM information services (SWIM-style web services) so
 that a failed or runaway service is detected, restarted, and prevented from
 degrading anything more critical. All of this is systemd/cgroup-v2 policy —
 no custom supervisor is needed, which keeps the COTS argument clean.
+Everything in this section applies unchanged whether a service runs as a
+plain binary or as a Quadlet-managed container under the server-class
+update model (§6): Quadlet renders containers as native systemd units, so
+they receive the same restart, watchdog and resource policies.
 
 ### Resilience (ED-109A §2.4.3 — safety monitoring)
 
@@ -371,7 +375,9 @@ piecemeal would force rework:
 - **A/B rootfs scheme** (hot-swap / rollback, ED-109A 2.5.4) dictates the
   wic layout and update tooling.
 - **Read-only rootfs** requires deciding where writable state lives
-  (separate `/var` partition vs overlays) — constrained by the A/B layout.
+  (separate `/var` partition vs overlays) — constrained by the A/B layout,
+  and on the server class also sized for container image storage (see the
+  server-class update decision below).
 - **dm-verity / IMA-EVM** seal the rootfs and require the final partition
   map; only then does activating `lockdown=integrity` (and module signing)
   deliver real guarantees.
@@ -381,19 +387,25 @@ piecemeal would force rework:
 - systemd `PACKAGECONFIG` audit / service stripping for the final package
   set.
 
-### Update strategy: monolithic equipment baseline (decided 2026-07-25)
+### Update strategy — invariant principle (all workload classes)
+
+Deployed devices are updated through **atomic, image-based updates only** —
+never on-device package management, and never in-place replacement of
+individual files. A package manager (or a hand-replaced executable) on the
+target means a mutable rootfs, and "what exactly is running on that box"
+stops having a crisp answer; the SBOM/baseline evidence chain collapses.
+Every deployed unit of change must be a complete, versioned, signed,
+reproducible, SBOM'd artifact. What differs per workload class (§1) is
+the *granularity* of that unit — decided separately below for the CWP
+equipment class and the SWIM server class.
+
+### CWP equipment class: monolithic baseline (decided 2026-07-25)
 
 *Supersedes the "two independent update paths" decision of 2026-07-23;
 the superseded design is kept below as the documented fallback.*
 
-Deployed devices are updated through **atomic, image-based updates only** —
-never on-device package management. A package manager on the target means a
-mutable rootfs, and "what exactly is running on that box" stops having a
-crisp answer; the SBOM/baseline evidence chain collapses. Every deployed
-state must be a complete, versioned, reproducible, SBOM'd artifact.
-
-Within that principle there is exactly **one update path**: platform and
-application ship as a single monolithic image. A new application version
+For the CWP equipment class there is exactly **one update path**: platform
+and application ship as a single monolithic image. A new application version
 *is* a new equipment software baseline, delivered as a complete signed
 image into the **A/B rootfs slots** (write the inactive slot, switch,
 reboot; failed boot rolls back automatically — ED-109A §2.5.4
@@ -466,7 +478,11 @@ and every release re-exercises the full boot chain — mitigated by A/B
 rollback. These are the revisit triggers: update cadence far beyond a
 few per year, delivery over constrained links to many unattended sites,
 or multiple applications with genuinely independent release authorities
-would reopen this decision.
+would reopen this decision. (The last trigger *has* materialized — for
+the SWIM server class, not the CWP: hundreds of services with
+independent authors and cadences. It is handled by splitting the
+decision per workload class — see the server-class section below — not
+by reopening the CWP decision, whose premises are unchanged.)
 
 **Reversibility hedge (decided):** the Phase 2 partition map **reserves
 an unused application slot pair in the GPT** anyway. A/B updates write
@@ -490,6 +506,71 @@ support, Yocto integration via meta-rauc; an application slot class can
 be added to its slot configuration later if the fallback is ever
 activated) or swupdate. Decision falls with the partition-layout design
 since bundle format and slot map are coupled.
+
+### SWIM server class: sealed platform + containerized services (decided 2026-07-25)
+
+The monolithic-baseline rationale does not transfer to the server class.
+A SWIM estate is potentially **hundreds of services with independent
+authors and release cadences** — exactly the different-release-authorities
+problem the CWP analysis identified as the legitimate home of split
+update models. Forcing every one-service fix through a full node
+image-and-reboot cycle would put every team's release through one build
+authority's pipeline; the coordination cost grows with the service count.
+
+The requirement is deliberately *not* "update a single executable" —
+in-place binary replacement is forbidden by the invariant principle
+above. The requirement is: **update a single service as its own small,
+atomic, signed, versioned unit, without touching the platform baseline.**
+
+**Decision:** on the server class, the WilhelmOS platform image keeps the
+identical machinery as the CWP (A/B rootfs slots, RAUC, dm-verity seal,
+read-only rootfs) and additionally carries a minimal container runtime;
+each SWIM service is an **OCI container image** — independently built,
+versioned, signed, **pinned by digest** — stored on the writable data
+partition and updated per-service with no reboot and no write to the
+platform partitions. The two workload classes differ only in what rides
+on top of the same sealed platform.
+
+Runtime choice: **podman + Quadlet, not Kubernetes.** Quadlet renders
+each container as a native systemd unit, so the entire §5 design —
+restart/hang-detection policies, watchdog, `CPUWeight`/`MemoryMax`
+containment, priority protection — applies to containerized services
+verbatim. Podman is daemonless; there is no orchestrator, no control
+plane, and the certification-surface delta over the already-shipped
+systemd machinery is small. (Same selection logic as cage-over-Weston:
+the minimal component that does exactly the job.)
+
+What this preserves and strengthens:
+
+- **Independence of partitions returns at service granularity** — a
+  service update physically does not write the platform partitions; the
+  platform baseline is untouched, not merely demonstrably-unchanged.
+- **§2.4.1 partitioning becomes enforceable per service**: containers
+  give each service its own failure domain, resource caps and update
+  cadence, which is what makes per-component AL assignment concrete
+  (an AL5 and an AL3 service can share a node).
+- **Node baseline stays crisp**: platform image version + the set of
+  service image digests, all machine-readable — the fleet CM record is
+  a short list of hashes.
+- Per-service SBOMs travel in the service images; the platform SBOM is
+  unchanged by service releases.
+
+Costs accepted: podman and its dependencies join the platform baseline
+(pinned, SBOM'd, hardened like everything else); a service-image
+signing/verification chain (digest pinning + signature policy) must be
+operated; and the platform/service interface (runtime version, network
+policy, volume contracts) becomes a versioned compatibility surface — a
+narrower cousin of the platform-ABI contract the CWP decision deleted.
+
+**Documented alternative (not selected): monolithic redundant nodes.**
+Keep CWP-style monolithic node images and exploit server redundancy:
+services deploy N+M for availability anyway, so rolling image updates
+node-by-node give zero service downtime (the immutable-infrastructure
+model — Talos Linux, Flatcar, CoreOS). Simpler machinery (no container
+runtime, no second signing chain), but it assumes a single build
+authority composes every node image on every service's release. It
+remains the better model if the service estate turns out to be small
+and single-authority; revisit trigger in reverse.
 
 During development none of this applies: the inner loop is sstate-cached
 image rebuilds (minutes) and `devtool deploy-target` (seconds, pushes a
