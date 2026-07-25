@@ -1,0 +1,8 @@
+# Overlay: build for generic UEFI x86-64 hardware (USB-bootable kiosk).
+# Usage: kas build kas/qemu-wrynose.yaml:kas/hw.yaml
+# Compose kas/debug.yaml on top for verbose boot logging on the console.
+header:
+  version: 14
+
+machine: genericx86-64
+target: wilhelmos-image-kiosk

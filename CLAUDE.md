@@ -54,6 +54,20 @@ WilhelmOS supports two boot modes. **Option 2 is the primary mode** — it runs 
 - **Upstream repos:** openembedded-core (meta) + bitbake + meta-yocto (meta-poky, meta-yocto-bsp) + meta-openembedded (meta-oe) — Yocto 5.3+ has no poky combined repo; all pinned to exact commit SHAs in `kas/qemu-wrynose.yaml` (update pins via `git ls-remote`)
 - **Custom layer:** `meta-wilhelmos/` (priority 6)
 - Shared download/sstate dirs live one level up: `../downloads`, `../sstate-cache`
+- **kas overlays** (compose with `:`): `kas/debug.yaml` (verbose-boot wks), `kas/hw.yaml` (MACHINE=genericx86-64, USB-bootable kiosk for bare metal — adds Intel GPU firmware + i915/xe/amdgpu modules via gpu.cfg)
+- **Graphical QEMU:** `runqemu wilhelmos-image-kiosk kvm sdl slirp serialstdio` inside `kas shell` (kas passes DISPLAY/XAUTHORITY through via the `env:` block); add `wic ovmf` to boot the real UEFI/systemd-boot chain; add `gl` for virgl acceleration
+
+## Bare-Metal Diagnosis
+
+After a hardware test, the boot USB stick is plugged back into the build host and is available for post-mortem: mount it (`udisksctl mount -b /dev/sdX2`, label `rootfs`) and inspect the flashed rootfs directly. journald is persistent on the image, so the failed boot's logs are on the stick (reading the journal and `/etc/shadow` requires root).
+
+Claude's sandboxed shell has no TTY for sudo, and sudo's credential cache is per-terminal — so the user must run the privileged copy in their own terminal, then Claude analyzes the readable copy:
+
+```bash
+sudo sh -c 'D=/var/tmp/wilhelmos-postmortem; rm -rf $D; cp -a /run/media/aludin/rootfs/var/log/journal $D; cp /run/media/aludin/rootfs/etc/shadow $D/shadow.txt; chown -R aludin:aludin $D'
+```
+
+Then: `journalctl -D /var/tmp/wilhelmos-postmortem --list-boots`, `journalctl -D ... -b <boot> -p err`, etc.
 
 ## Make Targets
 
@@ -80,13 +94,18 @@ meta-wilhelmos/
     layer.conf                  # Layer registration
     distro/wilhelmos.conf       # Distro policy, features, user setup
   recipes-core/
-    images/                     # wilhelmos-image-base image recipe
+    images/                     # wilhelmos-image-base + wilhelmos-image-kiosk
     busybox/                    # Disable busybox syslog (journald replaces it)
     base-files/                 # vconsole.conf (fr_CH keymap, Terminus font)
+    systemd/                    # Persistent journald drop-in
   recipes-fonts/                # Terminus console font package
-  recipes-kernel/               # Kernel config appends (USB, EFI, ext4)
+  recipes-graphics/
+    wlroots/                    # wlroots 0.19 (cage dependency)
+    cage/                       # cage compositor + wilhelmos-kiosk-session service
+    wilhelm-renderer/           # wilhelm_renderer_imgui demo app (cargo recipe)
+  recipes-kernel/               # Kernel config appends (USB/EFI/ext4 + hardening)
   recipes-security/             # Sudoers policy (wheel group, password required)
-  wic/                          # WIC disk image layout
+  files/wic/                    # WIC disk image layouts (production + debug)
 ```
 
 ## User Setup

@@ -1,0 +1,28 @@
+From: WilhelmOS <anwar.ludin@algonents.com>
+Subject: [PATCH] xdg-shell: ignore fullscreen requests before initial commit
+
+wlroots 0.19 asserts (wlr_xdg_surface_schedule_configure:
+`surface->initialized`) if a configure is scheduled before the client's
+initial commit. Clients such as GLFW request fullscreen at window
+creation time, before committing, which crashed cage.
+
+Backport of the guard present in cage master (which targets wlroots
+0.20 and cannot be used wholesale): early-return when the toplevel is
+not yet initialized. The kiosk view-mapping path fullscreens the
+surface after the initial commit anyway.
+
+Upstream-Status: Backport [https://github.com/cage-kiosk/cage/blob/5491610293a59123710861330be92e4c2ec93840/xdg_shell.c]
+
+--- a/xdg_shell.c
++++ b/xdg_shell.c
+@@ -188,6 +188,10 @@ handle_xdg_toplevel_request_fullscreen(struct wl_listener *listener, void *data)
+ {
+ 	struct cg_xdg_shell_view *xdg_shell_view = wl_container_of(listener, xdg_shell_view, request_fullscreen);
+
++	if (!xdg_shell_view->xdg_toplevel->base->initialized) {
++		return;
++	}
++
+ 	/**
+ 	 * Certain clients do not like figuring out their own window geometry if they
+ 	 * display in fullscreen mode, so we set it here.

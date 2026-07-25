@@ -37,16 +37,19 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the phased roadmap and sequencing ratio
 
 sky_guard_client is an OpenGL situation display for ATM. It uses wilhelm_renderer (custom 2D engine), Dear ImGui, GLFW, and B612Mono font. This is the core product mode.
 
-- [ ] Add GPU/DRM/KMS kernel support (CONFIG_DRM, CONFIG_DRM_I915, CONFIG_DRM_AMDGPU, etc.)
-- [ ] Add Mesa OpenGL drivers to image (meta-oe or custom recipe)
-- [ ] Add GLFW library to image (required by wilhelm_renderer for window/context creation)
+Stack validation is DONE (2026-07-24, see DESIGN.md §4): the wilhelm_renderer_imgui demo runs fullscreen under cage in wilhelmos-image-kiosk, verified in QEMU.
+
+- [x] Add GPU/DRM/KMS kernel support — virtio built in for QEMU; gpu.cfg adds i915/xe/amdgpu modules + SimpleDRM fallback for bare metal (Intel firmware installed on genericx86-64 via kas/hw.yaml)
+- [x] Add Mesa OpenGL drivers to image (via wilhelm-renderer-demo RDEPENDS: libegl-mesa, libgbm, mesa-megadriver)
+- [x] Add GLFW library to image — not needed as a package: wilhelm_renderer_sys vendors and statically links GLFW 3.4 (Wayland-only via GLRENDERER_BUILD_X11=OFF)
 - [x] Determine if GLFW can run directly on DRM/KMS or needs a Wayland compositor — it cannot (GLFW is X11/Wayland only); compositor required, **cage** chosen (see DESIGN.md §4)
-- [ ] Add cage recipe (+ wlroots if needed); Weston kiosk-shell allowed as bring-up scaffold only, must not ship
-- [ ] Add freetype/fontconfig for TrueType font rendering (if not bundled in wilhelm_renderer)
+- [x] Add cage recipe (+ wlroots) — wlroots 0.19.3 + cage recipes in recipes-graphics/; no Weston scaffold was needed
+- [x] Add freetype for TrueType rendering — vendored/statically linked in wilhelm_renderer_sys; fontconfig not needed
 - [ ] Ship B612Mono-Regular.ttf font (aviation-specific, used by sky_guard_client)
-- [ ] Create systemd service to auto-launch sky_guard_client fullscreen on boot
-- [ ] Evaluate image size impact (Mesa + GPU drivers + GLFW + fonts vs base image)
-- [ ] Cross-compile sky_guard_client + wilhelm_renderer for the target (Yocto SDK or cargo-cross)
+- [x] Create systemd service to auto-launch the kiosk app fullscreen on boot (wilhelmos-kiosk-session / cage-kiosk.service; runs the validation demo — switch to sky_guard_client later)
+- [ ] Evaluate image size impact (Mesa + GPU drivers + fonts vs base image)
+- [ ] Cross-compile sky_guard_client for the target (wilhelm_renderer cross-compile proven by the demo recipe)
+- [ ] Merge + publish the feat/kiosk-validation crate changes (version bumps, crates.io), then switch wilhelm-renderer-demo to crate:// fetching
 
 ### Option 1 — TTY mode (server / maintenance)
 
@@ -56,7 +59,7 @@ Used for sky_guard_server (headless, no GPU) or system maintenance access.
 - [ ] Auto-launch TUI or shell from user profile
 - [ ] Evaluate PSF fonts for console use (Terminus, Spleen)
 - [ ] Set framebuffer resolution via kernel `video=` parameter
-- [ ] Keep login shell on tty2 (`Alt+F2`) for maintenance access when running kiosk mode
+- [x] Keep login shell on tty2 (`Alt+F2`) for maintenance access when running kiosk mode (getty@tty2 enabled by wilhelmos-kiosk-session)
 
 ---
 
@@ -92,7 +95,7 @@ Safety monitoring allows the monitored software to be assigned the AL associated
 - [ ] Enable hardware watchdog timer support (kernel + systemd `RuntimeWatchdogSec`) — Phase 2, see DESIGN.md §6
 - [ ] Configure systemd service restart policies for critical services — Phase 2
 - [x] Add persistent logging to survive reboots (`Storage=persistent` via `wilhelmos-journald-conf` + `VOLATILE_LOG_DIR = "no"`)
-- [ ] Consider A/B partition scheme for safe updates and rollback (supports Section 2.5.4 cutover/hot swapping)
+- [ ] Implement the two-path update architecture (decided, see DESIGN.md §6): A/B platform slots ("OS patching", infrequent) + independent application slot pair (frequent, emergency-capable), atomic image-based with rollback (Section 2.5.4); candidate tooling RAUC
 
 ### COTS Evidence Package (ED-109A Section 12.4)
 
@@ -117,7 +120,7 @@ The applicant needs evidence to satisfy additional COTS objectives (Section 12.4
 Supports verification objectives in Annex A, Tables A-3 through A-7. The level of structural coverage depends on the target AL (Table A-7): decision coverage for AL1-AL2, statement coverage for AL3.
 
 - [ ] Add automated boot-to-login integration tests (QEMU-based CI)
-- [ ] Boot the .wic image in QEMU via OVMF (`runqemu wic ovmf`) to exercise the real UEFI → systemd-boot → GPT chain that ext4 direct-kernel boot skips
+- [x] Boot the .wic image in QEMU via OVMF (`runqemu wic ovmf`) to exercise the real UEFI → systemd-boot → GPT chain — done 2026-07-24, full kiosk validation 9/9 through the UEFI path
 - [ ] Add image size and package manifest regression checks
 - [ ] Implement kernel config verification (`bitbake -c kernel_configcheck`)
 - [ ] Define structural coverage targets appropriate to target AL (Table A-7)
