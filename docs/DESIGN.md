@@ -128,6 +128,31 @@ but is far slower and unverified). Use a quality USB 3 stick — cheap
 flash sustains ~1-2 MB/s. Secure Boot must be disabled until the Phase 2
 signing design.
 
+**Known-good flash procedure (validated 2026-07-25).** A USB
+mass-storage write that straddles a host suspend/resume cycle wedges the
+stick (one write request stuck in-flight forever, dd unkillable in D
+state, ~nothing written) — and a desktop host that *fails* to suspend
+(e.g. an NVIDIA driver returning -5) will retry in a loop, breaking
+every flash attempt. The sequence that works:
+
+```
+# 1. one-time per session: stop the host from ever suspending mid-write
+sudo systemctl mask --now sleep.target suspend.target hybrid-sleep.target hibernate.target
+# 2. no partition of the stick may be mounted (desktops automount!)
+lsblk /dev/sdX    # unmount anything mounted, e.g. udisksctl unmount -b /dev/sdX1
+# 3. decompress and flash with direct I/O (progress = real device writes)
+zstd -f -d wilhelmos-image-kiosk-genericx86-64.rootfs.wic.zst -o flash.wic
+sudo dd if=flash.wic of=/dev/sdX bs=4M status=progress oflag=direct conv=fsync
+```
+
+`oflag=direct` matters twice over: dd's progress shows true device
+throughput (buffered dd reports GB/s into the page cache, then "hangs"
+in the final fsync), and a stall is visible within seconds instead of
+after minutes. Expect bursty rates on cheap sticks (fast until the SLC
+cache fills at a few hundred MB, then the true sustained rate).
+`bmaptool copy` works equally well once suspend is masked — the suspend
+loop, not the tool, was the failure cause on the build host.
+
 **First bare-metal boot (Arrow Lake workstation, 2026-07-25).** Driver
 question answered: the Core Ultra 7 265K iGPU (device 8086:7d67) binds
 **i915** (not xe) on kernel 6.18, display version 14 (Meteor Lake-class

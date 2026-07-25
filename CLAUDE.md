@@ -57,6 +57,18 @@ WilhelmOS supports two boot modes. **Option 2 is the primary mode** — it runs 
 - **kas overlays** (compose with `:`): `kas/debug.yaml` (verbose-boot wks), `kas/hw.yaml` (MACHINE=genericx86-64, USB-bootable kiosk for bare metal — adds Intel GPU firmware + i915/xe/amdgpu modules via gpu.cfg)
 - **Graphical QEMU:** `runqemu wilhelmos-image-kiosk kvm sdl slirp serialstdio` inside `kas shell` (kas passes DISPLAY/XAUTHORITY through via the `env:` block); add `wic ovmf` to boot the real UEFI/systemd-boot chain; add `gl` for virgl acceleration
 
+## Bare-Metal Diagnosis
+
+After a hardware test, the boot USB stick is plugged back into the build host and is available for post-mortem: mount it (`udisksctl mount -b /dev/sdX2`, label `rootfs`) and inspect the flashed rootfs directly. journald is persistent on the image, so the failed boot's logs are on the stick (reading the journal and `/etc/shadow` requires root).
+
+Claude's sandboxed shell has no TTY for sudo, and sudo's credential cache is per-terminal — so the user must run the privileged copy in their own terminal, then Claude analyzes the readable copy:
+
+```bash
+sudo sh -c 'D=/var/tmp/wilhelmos-postmortem; rm -rf $D; cp -a /run/media/aludin/rootfs/var/log/journal $D; cp /run/media/aludin/rootfs/etc/shadow $D/shadow.txt; chown -R aludin:aludin $D'
+```
+
+Then: `journalctl -D /var/tmp/wilhelmos-postmortem --list-boots`, `journalctl -D ... -b <boot> -p err`, etc.
+
 ## Make Targets
 
 - `make build` — build image via `kas build`
