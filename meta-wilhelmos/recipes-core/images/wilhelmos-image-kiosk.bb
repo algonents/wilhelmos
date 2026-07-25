@@ -5,7 +5,13 @@ tty1, with a maintenance getty on tty2."
 
 require wilhelmos-image-base.bb
 
-IMAGE_INSTALL:append = " cage seatd wilhelmos-kiosk-session wilhelm-renderer-demo"
+# The kiosk application (§7 composition contract): customer images
+# require this image and override KIOSK_APP with their own application
+# package, which must provide /usr/libexec/kiosk-app (virtual/kiosk-app).
+# Default: the WilhelmOS reference application.
+KIOSK_APP ?= "wilhelmos-kiosk-demo"
+
+IMAGE_INSTALL:append = " cage seatd wilhelmos-kiosk-session ${KIOSK_APP}"
 
 # Bare metal needs the modular GPU drivers plus their firmware; the QEMU
 # image stays lean (virtio-gpu is built in).

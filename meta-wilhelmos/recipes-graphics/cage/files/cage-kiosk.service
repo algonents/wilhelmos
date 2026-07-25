@@ -1,5 +1,5 @@
 [Unit]
-Description=Cage Wayland kiosk running the wilhelm_renderer imgui demo
+Description=Cage Wayland kiosk session
 Requires=seatd.service
 After=seatd.service systemd-user-sessions.service getty@tty1.service
 Conflicts=getty@tty1.service
@@ -36,7 +36,9 @@ ExecStartPre=/bin/sh -c 'n=0; while [ ! -S /run/seatd.sock ] && [ $n -lt 50 ]; d
 # anyway so the SimpleDRM/llvmpipe fallback still boots on unsupported
 # GPUs.
 ExecStartPre=/bin/sh -c 'n=0; while ! ls /dev/dri/renderD* >/dev/null 2>&1 && [ $n -lt 600 ]; do sleep 0.1; n=$((n+1)); done'
-ExecStart=/usr/bin/cage -ds -- /usr/bin/wilhelm-imgui-demo
+# Stable exec contract (§7): the installed kiosk application package
+# provides /usr/libexec/kiosk-app; the session never names a specific app.
+ExecStart=/usr/bin/cage -ds -- /usr/libexec/kiosk-app
 Restart=on-failure
 RestartSec=2
 

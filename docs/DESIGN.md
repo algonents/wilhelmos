@@ -605,24 +605,32 @@ deliberately also the certification boundary:
   scope. Nested configuration control, one accountable party per level,
   consolidating at the equipment boundary (§6).
 
-Two composition contracts make this concrete (**to implement** — both
-points are currently hardcoded to the reference app):
+Two composition contracts make this concrete (implemented 2026-07-25):
 
 1. **Image composition.** The kiosk image consumes the application
    through a variable — `IMAGE_INSTALL:append = " … ${KIOSK_APP}"`,
    `KIOSK_APP ?= "wilhelm-renderer-demo"` — so a customer image recipe
    just `require`s the platform kiosk image and sets `KIOSK_APP` (plus
-   whatever utilities/services it adds). Today
-   `wilhelmos-image-kiosk.bb` names `wilhelm-renderer-demo` directly.
+   whatever utilities/services it adds).
 2. **Session exec contract.** `cage-kiosk.service` execs a stable path,
    `/usr/libexec/kiosk-app`, which the application package must provide
    (symlink or wrapper it installs); build-time enforcement via a
    `virtual/kiosk-app` PROVIDES so exactly one package claims the role.
-   Today the service execs `/usr/bin/wilhelm-imgui-demo` directly. This
-   path is the seed of the platform/application interface description,
-   and it makes the monolithic→split migration hedge (§6) invisible to
-   the session machinery: the service execs the same path whether the
-   application is baked into the rootfs or mounted from an app slot.
+   This path is the seed of the platform/application interface
+   description, and it makes the monolithic→split migration hedge (§6)
+   invisible to the session machinery: the service execs the same path
+   whether the application is baked into the rootfs or mounted from an
+   app slot.
+
+The reference application is moving to its own repo
+(`wilhelmos-kiosk-demo`, the integrator's worked example — standalone
+binary crate, committed lockfile, release tags, zero git dependencies in
+tagged releases). A staged recipe
+(`recipes-graphics/wilhelmos-kiosk-demo/*.bb.staged`, kept out of
+bitbake's parse path until its repo exists) replaces the current
+triple-git-checkout `wilhelm-renderer-demo` recipe once the renderer
+crates are published and v0.1.0 is tagged; activation steps are listed
+in the staged file.
 
 Existing precedent in the same spirit: production images must override
 `EXTRA_USERS_PARAMS` to replace the dev credential (§3) — platform

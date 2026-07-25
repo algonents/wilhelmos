@@ -1,8 +1,9 @@
-SUMMARY = "WilhelmOS kiosk session: cage running the wilhelm imgui demo on tty1"
+SUMMARY = "WilhelmOS kiosk session: cage running the kiosk application on tty1"
 DESCRIPTION = "Installs the cage-kiosk systemd service that starts the cage \
 compositor on tty1 as the dedicated 'kiosk' user (seatd seat management, no \
-PAM/logind session) and launches the wilhelm_renderer imgui demo fullscreen. \
-A maintenance getty stays on tty2."
+PAM/logind session) and launches the kiosk application via the stable \
+/usr/libexec/kiosk-app path, provided by whichever application package the \
+image installs (KIOSK_APP). A maintenance getty stays on tty2."
 LICENSE = "MIT"
 LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda2f7b4f302"
 
@@ -33,4 +34,6 @@ FILES:${PN} += "${systemd_system_unitdir} ${sysconfdir}/systemd"
 
 SYSTEMD_SERVICE:${PN} = "cage-kiosk.service"
 
-RDEPENDS:${PN} = "cage seatd wilhelm-renderer-demo"
+# App-neutral by design (§7): the kiosk application is chosen by the
+# image via KIOSK_APP; this package depends only on the session machinery.
+RDEPENDS:${PN} = "cage seatd kiosk-app"
