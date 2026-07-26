@@ -14,8 +14,13 @@ KIOSK_APP ?= "kiosk-app-demo"
 IMAGE_INSTALL:append = " cage seatd wilhelmos-kiosk-session ${KIOSK_APP}"
 
 # Bare metal needs the modular GPU drivers plus their firmware; the QEMU
-# image stays lean (virtio-gpu is built in).
-IMAGE_INSTALL:append:genericx86-64 = " kernel-modules linux-firmware-i915 linux-firmware-xe"
+# image stays lean (virtio-gpu is built in). Firmware is deliberately
+# vendor-agnostic — genericx86-64 means Intel (i915/xe) and AMD (amdgpu)
+# iGPUs boot the same image; rtl-nic covers the Realtek 2.5GbE PHYs common
+# on mini-PC test/deployment hardware (see docs/HARDWARE.md).
+IMAGE_INSTALL:append:genericx86-64 = " kernel-modules \
+    linux-firmware-i915 linux-firmware-xe \
+    linux-firmware-amdgpu linux-firmware-rtl-nic"
 
 # cage-kiosk.service is WantedBy=graphical.target
 SYSTEMD_DEFAULT_TARGET = "graphical.target"
