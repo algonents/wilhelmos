@@ -39,6 +39,7 @@ WilhelmOS supports two boot modes. **Option 2 is the primary mode** — it runs 
 - Uses B612Mono TrueType font (aviation-specific, designed by Airbus for cockpit displays)
 - Requires: GPU drivers (Mesa + DRM/KMS), OpenGL, GLFW; production hardware targets **integrated Intel/AMD graphics** (in-tree drivers, full hardware acceleration — discrete NVIDIA explicitly not targeted, see docs/DESIGN.md §4)
 - Compositor: **cage** (minimal Wayland kiosk compositor) — required, since GLFW has no direct DRM/KMS backend; chosen over Weston for certification-scope reasons (see docs/DESIGN.md §4)
+- UI scaling: `WILHELMOS_UI_SCALE` bitbake variable (default `"1.5"`, in the wilhelmos-kiosk-session recipe) — installs a `cage-kiosk.service.d` drop-in exporting it to the app; consumed by the wilhelmos_kiosk framework (its DESIGN.md §12); override per deployment, `""` = no drop-in (framework falls back to 1.0)
 - The application stack: `systemd → cage → sky_guard_client → OpenGL → DRM/KMS → display`
 
 ### Related Projects
