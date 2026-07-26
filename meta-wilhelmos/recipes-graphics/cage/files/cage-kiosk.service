@@ -39,7 +39,14 @@ ExecStartPre=/bin/sh -c 'n=0; while ! ls /dev/dri/renderD* >/dev/null 2>&1 && [ 
 # Stable exec contract (§7): the installed kiosk application package
 # provides /usr/libexec/kiosk-app; the session never names a specific app.
 ExecStart=/usr/bin/cage -ds -- /usr/libexec/kiosk-app
-Restart=on-failure
+# `always`, not `on-failure`: the display may only stay down when the
+# supervisor itself was told to stop (systemctl stop is never
+# auto-restarted). A clean exit — e.g. an out-of-band `kill -TERM`,
+# which the app answers with an ordered shutdown and exit 0 — was a
+# permanent black screen under on-failure. The operator seat has no
+# kill path at all (no exit keys, no in-session terminal); signals are
+# admin-only, and even those now only blink the display.
+Restart=always
 RestartSec=2
 
 [Install]
