@@ -115,9 +115,9 @@ SRC_URI += " \
     crate://crates.io/wasm-bindgen-shared/0.2.126 \
     crate://crates.io/weezl/0.1.12 \
     crate://crates.io/wilhelm_renderer/0.13.0 \
-    crate://crates.io/wilhelm_renderer_imgui/0.10.0 \
+    crate://crates.io/wilhelm_renderer_imgui/0.11.0 \
     crate://crates.io/wilhelm_renderer_sys/0.11.0 \
-    crate://crates.io/wilhelmos_kiosk/0.1.0 \
+    crate://crates.io/wilhelmos_kiosk/0.2.0 \
     crate://crates.io/wit-bindgen/0.57.1 \
     crate://crates.io/y4m/0.8.0 \
     crate://crates.io/zerocopy/0.8.55 \
@@ -240,9 +240,9 @@ SRC_URI[wasm-bindgen-macro-support-0.2.126.sha256sum] = "f3997c7839262f4ef12cf90
 SRC_URI[wasm-bindgen-shared-0.2.126.sha256sum] = "dc1b4cb0cc549fcf58d7dfc081778139b3d283a081644e833e84682ad71cea24"
 SRC_URI[weezl-0.1.12.sha256sum] = "a28ac98ddc8b9274cb41bb4d9d4d5c425b6020c50c46f25559911905610b4a88"
 SRC_URI[wilhelm_renderer-0.13.0.sha256sum] = "02eb55032779e528283d0094e3d1d439a792dbac7670f7b3e2d15e48b3b0aa6e"
-SRC_URI[wilhelm_renderer_imgui-0.10.0.sha256sum] = "be6bb017ba4aa3943b1c4bffdcdff5b2d7c552be355dae6cf10cedace97a65d7"
+SRC_URI[wilhelm_renderer_imgui-0.11.0.sha256sum] = "d7a5d9c00d1f88187b67dc68b491293b0c031373a4e2461febf810e6ecf6a053"
 SRC_URI[wilhelm_renderer_sys-0.11.0.sha256sum] = "233c7c9b999d08c9d1dd83e47da0f4f2a4743dde2911a367ce6ac1624729beb3"
-SRC_URI[wilhelmos_kiosk-0.1.0.sha256sum] = "1f4efcf1534ec8ce355343c52d96d72ee674127cf12389be68903c5bd63a8959"
+SRC_URI[wilhelmos_kiosk-0.2.0.sha256sum] = "7cb76df27559da24d95d382b3a12805af5f3c568c40674b2b729a97648556bbe"
 SRC_URI[wit-bindgen-0.57.1.sha256sum] = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 SRC_URI[y4m-0.8.0.sha256sum] = "7a5a4b21e1a62b67a2970e6831bc091d7b87e119e7f9791aef9702e3bef04448"
 SRC_URI[zerocopy-0.8.55.sha256sum] = "b5a105cd7b140f6eeec8acff2ea38135d3cab283ada58540f629fe51e46696eb"
