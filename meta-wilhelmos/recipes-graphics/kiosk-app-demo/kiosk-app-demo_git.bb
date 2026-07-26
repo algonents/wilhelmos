@@ -14,10 +14,10 @@ inherit cargo cargo-update-recipe-crates pkgconfig features_check
 REQUIRED_DISTRO_FEATURES = "wayland opengl"
 
 SRC_URI = "git://github.com/algonents/kiosk-app-demo.git;protocol=https;branch=master"
-# v0.2.2 tag
-SRCREV = "f563f6d58dd856d673522408b297ce60d6fe61e7"
+# v0.3.0 tag
+SRCREV = "32d294ef238a72e3acd29bbfa9e0b1e1dba5764a"
 
-PV = "0.2.2"
+PV = "0.3.0"
 
 require ${BPN}-crates.inc
 

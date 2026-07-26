@@ -684,6 +684,21 @@ recorded in that repo's `docs/DESIGN.md`:
 - Runtime plugin loading ("certified shell binary + customer plugin")
   was considered and deferred; the trait surface is kept FFI-promotable
   should that model become commercially decisive.
+- **UI scaling (added 2026-07-26).** DPI-style scaling is
+  framework-owned, not compositor-owned (rationale in wilhelmos_kiosk
+  `docs/DESIGN.md` §12: cage stays at native mode/scale 1.0 — no
+  wlr-randr in the certified image, no integer-only compositor scales).
+  The platform's only involvement is configuration: the
+  `wilhelmos-kiosk-session` recipe exposes a `WILHELMOS_UI_SCALE`
+  bitbake variable that installs a
+  `cage-kiosk.service.d/10-ui-scale.conf` drop-in exporting the
+  variable to the kiosk application. **Platform default: 1.5** (agreed
+  2026-07-26 — readable on the 4K panels the product targets).
+  Deployments override the value per panel/viewing distance in their
+  kas/image config, same spirit as `EXTRA_USERS_PARAMS`; setting it to
+  `""` installs no drop-in (framework default 1.0). Apps built on raw
+  `wilhelm_renderer` simply ignore the variable — the session
+  machinery stays app-framework-neutral.
 
 ## 8. Phase 3 — ED-109A evidence package
 

@@ -11,6 +11,14 @@ SRC_URI = "file://cage-kiosk.service"
 
 S = "${UNPACKDIR}"
 
+# UI scaling knob (wilhelmos_kiosk framework, its DESIGN.md §12): installs
+# a systemd drop-in exporting WILHELMOS_UI_SCALE to the kiosk application.
+# Platform default 1.5 (agreed 2026-07-26: readable on the 4K panels the
+# product targets without dwarfing lower-resolution ones). Deployments
+# override per panel/viewing distance in their kas/image config; set to ""
+# to install no drop-in (framework then falls back to 1.0).
+WILHELMOS_UI_SCALE ?= "1.5"
+
 inherit systemd useradd features_check
 
 REQUIRED_DISTRO_FEATURES = "wayland opengl"
@@ -28,6 +36,15 @@ do_install() {
     install -d ${D}${sysconfdir}/systemd/system/getty.target.wants
     ln -sf ${systemd_system_unitdir}/getty@.service \
         ${D}${sysconfdir}/systemd/system/getty.target.wants/getty@tty2.service
+
+    # Optional UI-scale drop-in (see WILHELMOS_UI_SCALE above)
+    if [ -n "${WILHELMOS_UI_SCALE}" ]; then
+        install -d ${D}${systemd_system_unitdir}/cage-kiosk.service.d
+        printf '[Service]\nEnvironment=WILHELMOS_UI_SCALE=%s\n' \
+            '${WILHELMOS_UI_SCALE}' \
+            > ${D}${systemd_system_unitdir}/cage-kiosk.service.d/10-ui-scale.conf
+        chmod 0644 ${D}${systemd_system_unitdir}/cage-kiosk.service.d/10-ui-scale.conf
+    fi
 }
 
 FILES:${PN} += "${systemd_system_unitdir} ${sysconfdir}/systemd"
