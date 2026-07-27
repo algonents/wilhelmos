@@ -48,6 +48,12 @@ ExecStart=/usr/bin/cage -ds -- /usr/libexec/kiosk-app
 # admin-only, and even those now only blink the display.
 Restart=always
 RestartSec=2
+# SIGTERM can go unanswered when the seat is disabled (operator on a
+# maintenance VT: seatd pauses the DRM FD, frame callbacks stop, the app
+# blocks and never observes the signal) — without a bound, shutdown from
+# tty2 holds the stop job for the 90s default before SIGKILL. An ordered
+# app shutdown takes <1s; anything longer is the wedged case.
+TimeoutStopSec=10
 
 [Install]
 WantedBy=graphical.target
