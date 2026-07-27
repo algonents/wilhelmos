@@ -218,6 +218,70 @@ the customer composition contracts (`KIOSK_APP` image variable +
 image-size/boot-time evaluation, a pinned production hardware machine
 config once CWP hardware is selected.
 
+### Console font handling (decided 2026-07-27)
+
+Fonts exist in two unrelated domains, handled by different mechanisms:
+
+- **Kiosk surface (tty1):** B612Mono TrueType, rendered by the
+  application stack (freetype vendored in wilhelm_renderer). No console
+  involvement — nothing here concerns fbcon.
+- **Virtual consoles (tty2 maintenance getty, future diagnostics TUI):**
+  Terminus 16×32, **compiled into the kernel** (`console-font.cfg`:
+  `CONFIG_FONTS` + `CONFIG_FONT_TER16x32`, note the lowercase `x`) and
+  selected with `fbcon=font:TER16x32` in the wks bootloader append.
+
+The compiled-in font replaces the standard userspace path
+(`/etc/vconsole.conf` + `systemd-vconsole-setup`) as the mechanism of
+record, because that path cannot work under WilhelmOS's boot
+architecture. A console font is not persistent configuration — it is
+glyph state *uploaded* into the kernel's console driver, valid only for
+the current fbcon binding. The failure chain, observed in the GMKtec
+journal (first AMD validation, `docs/HARDWARE.md` #2):
+
+1. `systemd-vconsole-setup` uploads Terminus early in boot — against the
+   SimpleDRM firmware-framebuffer console.
+2. The native GPU driver is a module (WilhelmOS has no initramfs) and
+   binds seconds to minutes later. fbcon re-binds to the new
+   framebuffer, and every VT resets to the kernel's *compiled-in
+   default* font — previously the 8×16 VGA font, unreadable on a 4K
+   panel.
+3. systemd's own recovery (`90-vconsole.rules` re-runs vconsole-setup
+   when the new vtcon registers) fails structurally in a kiosk: the
+   font ioctls operate through the active VT, which by then is tty1 in
+   `KD_GRAPHICS` mode under cage — `KD_FONT_OP_GET` returns
+   EINVAL/EIO and "Fonts will not be copied to remaining consoles".
+   On the Intel workstation this race happened to be won (i915 bound
+   while tty1 was still a text console); on the GMKtec it was lost.
+   Either way it is a race, and the maintenance console must not
+   depend on winning it.
+
+General-purpose distros do not hit this because their GPU driver loads
+from the initramfs *before* font setup runs — one upload, no handover.
+Alternatives rejected: adding an initramfs (an entire boot stage of
+size, complexity, and certification scope to make a font stick); a
+bespoke udev-triggered `setfont` unit (re-implements systemd's rule
+with hardcoded VT numbers, still timing-dependent, and misses
+pre-userspace/emergency consoles).
+
+Making the kernel's *default* font Terminus dissolves the race instead
+of trying to win it: the compiled-in font exists before userspace,
+applies on every vtcon (re)bind, on every VT, regardless of driver
+timing or who owns tty1 — deterministic in exactly the way the
+platform's assurance argument favors, for ~30 KB of kernel.
+`vconsole.conf` remains for the keymap (fr_CH); its early font upload
+is now redundant but harmless (same glyphs).
+
+Fixed pixel size across panels: 16×32 yields a 120×33 character grid at
+1080p and 240×67 at 4K — readable across the realistic range, and the
+kernel ships nothing larger anyway. Deployments outside that range pin
+the console resolution with the `video=` kernel parameter (the console
+mode only — cage modesets the kiosk output independently), as a
+per-deployment setting analogous to `WILHELMOS_UI_SCALE` (TODO).
+tty2 is a first-class operator surface — a glance-level diagnostics TUI
+is planned (TODO) — so console rendering is product UX, held to the
+same determinism bar as the kiosk display, not best-effort maintenance
+plumbing.
+
 ### Compositor decision: cage (decided)
 
 A compositor is required, not optional: **GLFW has no direct DRM/KMS
