@@ -1,11 +1,17 @@
 # --- Yocto output directories ---
 # Build state lives in KAS_WORK_DIR (../wilhelmos-build, see Makefile);
-# these entries are guardrails in case kas is ever run without it.
+# these entries are guardrails in case kas is ever run without it —
+# which silently clones the upstream repos right here.
 build/
 downloads/
 sstate-cache/
 tmp*/
 cache/
+bitbake/
+meta-openembedded/
+meta-yocto/
+openembedded-core/
+poky/
 
 # --- Yocto deploy artifacts ---
 *.wic
