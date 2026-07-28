@@ -2,7 +2,11 @@
 # For a variant with verbose serial-console kernel args (useful when
 # dd'ing to USB for bare-metal debugging), see wilhelmos-efi-debug.wks.
 
-part /boot --source bootimg-efi --sourceparams="loader=systemd-boot" --label boot --active --align 4096
+# --no-fstab-update: wic would otherwise hardcode the flash-time device
+# (/dev/sda1) into /etc/fstab, which breaks when the image is installed
+# to a different disk (internal NVMe). systemd-gpt-auto mounts the ESP
+# of the disk the root filesystem is on instead — correct on any medium.
+part /boot --source bootimg-efi --sourceparams="loader=systemd-boot" --label boot --active --align 4096 --no-fstab-update
 
 part / --source rootfs --fstype=ext4 --label rootfs --align 4096
 
