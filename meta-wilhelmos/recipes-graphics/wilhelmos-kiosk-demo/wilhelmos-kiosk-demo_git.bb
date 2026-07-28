@@ -3,7 +3,7 @@ DESCRIPTION = "Fullscreen demo application built on the wilhelmos_kiosk \
 application framework: validates the WilhelmOS graphical kiosk stack end \
 to end and serves as the worked packaging example for integrator kiosk \
 applications."
-HOMEPAGE = "https://github.com/algonents/kiosk-app-demo"
+HOMEPAGE = "https://github.com/algonents/wilhelmos_kiosk_demo"
 # MIT (crates + Dear ImGui) with statically linked vendored GLFW (Zlib) and
 # FreeType (FTL)
 LICENSE = "MIT & Zlib & FTL"
@@ -13,11 +13,11 @@ inherit cargo cargo-update-recipe-crates pkgconfig features_check
 
 REQUIRED_DISTRO_FEATURES = "wayland opengl"
 
-SRC_URI = "git://github.com/algonents/kiosk-app-demo.git;protocol=https;branch=master"
-# v0.3.0 tag
-SRCREV = "32d294ef238a72e3acd29bbfa9e0b1e1dba5764a"
+SRC_URI = "git://github.com/algonents/wilhelmos_kiosk_demo.git;protocol=https;branch=master"
+# v0.3.1 tag
+SRCREV = "dd91cdcd892defb7e9e84af7940981504b004b27"
 
-PV = "0.3.0"
+PV = "0.3.1"
 
 require ${BPN}-crates.inc
 
@@ -44,10 +44,10 @@ PROVIDES = "virtual/kiosk-app"
 RPROVIDES:${PN} = "kiosk-app"
 
 do_install() {
-    install -Dm0755 ${B}/target/${CARGO_TARGET_SUBDIR}/kiosk-app-demo \
-        ${D}${bindir}/kiosk-app-demo
+    install -Dm0755 ${B}/target/${CARGO_TARGET_SUBDIR}/wilhelmos_kiosk_demo \
+        ${D}${bindir}/wilhelmos_kiosk_demo
     install -d ${D}${libexecdir}
-    ln -s ${bindir}/kiosk-app-demo ${D}${libexecdir}/kiosk-app
+    ln -s ${bindir}/wilhelmos_kiosk_demo ${D}${libexecdir}/kiosk-app
 }
 
 # GLFW loads its platform libraries with dlopen at runtime; none of these

@@ -711,15 +711,12 @@ Two composition contracts make this concrete (implemented 2026-07-25):
    whether the application is baked into the rootfs or mounted from an
    app slot.
 
-The reference application is moving to its own repo
-(`kiosk-app-demo`, the integrator's worked example — standalone
+The reference application lives in its own repo
+(`wilhelmos_kiosk_demo`, the integrator's worked example — standalone
 binary crate, committed lockfile, release tags, zero git dependencies in
-tagged releases). A staged recipe
-(`recipes-graphics/kiosk-app-demo/*.bb.staged`, kept out of
-bitbake's parse path until its repo exists) replaces the current
-triple-git-checkout `wilhelm-renderer-demo` recipe once the renderer
-crates are published and v0.1.0 is tagged; activation steps are listed
-in the staged file.
+tagged releases). Its recipe
+(`recipes-graphics/wilhelmos-kiosk-demo/`) replaced the earlier
+triple-git-checkout `wilhelm-renderer-demo` recipe.
 
 Existing precedent in the same spirit: production images must override
 `EXTRA_USERS_PARAMS` to replace the dev credential (§3) — platform
