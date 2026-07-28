@@ -90,7 +90,11 @@ echo "Giving the installed disk its own boot identity..."
 sfdisk -q --part-label "$TARGET" 2 wilhelmos-root
 udevadm settle
 mount "$TARGET_ESP" "$ESPMNT"
-sed -i 's/root=PARTLABEL=rootfs/root=PARTLABEL=wilhelmos-root/' \
+# /g: the image's boot entries carry root= twice on one line (wks
+# --append duplicates what wic generates) and the kernel honors the
+# last occurrence — replacing only the first leaves the system
+# unbootable.
+sed -i 's/root=PARTLABEL=rootfs/root=PARTLABEL=wilhelmos-root/g' \
     "$ESPMNT"/loader/entries/*.conf
 umount "$ESPMNT"
 sync
