@@ -1,0 +1,75 @@
+#!/bin/sh
+# wilhelmos-install — write the WilhelmOS disk image from the wicstore
+# partition to a target disk and register a UEFI boot entry.
+#
+# The install medium carries the image as a third partition labeled
+# "wicstore" holding wilhelmos.wic (+ optional wilhelmos.wic.sha256).
+# The ESP is partition 1 of the written image (wilhelmos-efi.wks).
+set -eu
+
+usage() {
+    echo "usage: wilhelmos-install <target-disk>   e.g. wilhelmos-install /dev/nvme0n1" >&2
+    exit 1
+}
+
+[ $# -eq 1 ] || usage
+TARGET=$1
+
+[ "$(id -u)" -eq 0 ] || { echo "error: run as root: sudo wilhelmos-install $TARGET" >&2; exit 1; }
+[ -b "$TARGET" ] || { echo "error: $TARGET: not a block device" >&2; exit 1; }
+
+WICPART=$(readlink -f /dev/disk/by-label/wicstore 2>/dev/null || true)
+if [ -z "$WICPART" ] || [ ! -b "$WICPART" ]; then
+    echo "error: no partition labeled 'wicstore' — is the install medium attached?" >&2
+    exit 1
+fi
+
+# Never overwrite the disk the install image (and running system) lives on
+WICDISK=/dev/$(lsblk -no pkname "$WICPART")
+if [ "$WICDISK" = "$TARGET" ]; then
+    echo "error: $TARGET is the install medium itself" >&2
+    exit 1
+fi
+
+echo "WilhelmOS will ERASE this disk and everything on it:"
+lsblk -o NAME,SIZE,TYPE,FSTYPE,LABEL "$TARGET"
+printf 'Type YES to continue: '
+read -r ANSWER
+[ "$ANSWER" = "YES" ] || { echo "aborted (nothing written)"; exit 1; }
+
+MNT=$(mktemp -d)
+trap 'umount "$MNT" 2>/dev/null || true; rmdir "$MNT" 2>/dev/null || true' EXIT
+mount -o ro "$WICPART" "$MNT"
+
+WIC=$MNT/wilhelmos.wic
+[ -f "$WIC" ] || { echo "error: wilhelmos.wic not found on wicstore partition" >&2; exit 1; }
+
+if [ -f "$WIC.sha256" ]; then
+    echo "Verifying image checksum..."
+    (cd "$MNT" && sha256sum -c wilhelmos.wic.sha256 >/dev/null) || {
+        echo "error: wilhelmos.wic checksum mismatch — re-copy it onto the medium" >&2
+        exit 1
+    }
+fi
+
+echo "Writing image to $TARGET (takes a minute or two, no progress output)..."
+dd if="$WIC" of="$TARGET" bs=4M
+sync
+
+if [ -d /sys/firmware/efi ]; then
+    # Retire stale firmware entries (the vendor OS being replaced, and any
+    # WilhelmOS entry from a previous install), then register ours first
+    # in BootOrder.
+    efibootmgr | grep -e 'Windows Boot Manager' -e ' WilhelmOS' \
+        | sed -n 's/^Boot\([0-9A-Fa-f]\{4\}\).*/\1/p' \
+        | while read -r NUM; do
+              efibootmgr -q -b "$NUM" -B
+          done
+    efibootmgr -q -c -d "$TARGET" -p 1 -L "WilhelmOS" -l '\EFI\BOOT\bootx64.efi'
+    echo "Firmware boot entries now:"
+    efibootmgr
+else
+    echo "note: booted in legacy BIOS mode, skipping UEFI boot entry setup"
+fi
+
+echo "Done. Power off, remove the install medium, and boot from the internal disk."
