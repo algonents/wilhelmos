@@ -14,4 +14,4 @@ do_install() {
     install -m 0755 ${S}/wilhelmos-install ${D}${sbindir}/wilhelmos-install
 }
 
-RDEPENDS:${PN} = "efibootmgr util-linux-lsblk"
+RDEPENDS:${PN} = "efibootmgr util-linux-lsblk util-linux-sfdisk util-linux-findmnt util-linux-blockdev"
