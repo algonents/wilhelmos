@@ -54,7 +54,7 @@ WilhelmOS supports two boot modes. **Option 2 is the primary mode** — it runs 
 - **KAS** orchestrates the Yocto build. Config: `kas/qemu-wrynose.yaml`
 - **Upstream repos:** openembedded-core (meta) + bitbake + meta-yocto (meta-poky, meta-yocto-bsp) + meta-openembedded (meta-oe) — Yocto 5.3+ has no poky combined repo; all pinned to exact commit SHAs in `kas/qemu-wrynose.yaml` (update pins via `git ls-remote`)
 - **Custom layer:** `meta-wilhelmos/` (priority 6)
-- Shared download/sstate dirs live one level up: `../downloads`, `../sstate-cache`
+- **All build state lives outside the repo** in `KAS_WORK_DIR` (default `../wilhelmos-build`, exported by the Makefile): upstream layer clones, `build/`, `downloads/`, `sstate-cache/`. The checkout contains only WilhelmOS sources. When running `kas` directly (not via `make`), export `KAS_WORK_DIR` first — otherwise kas clones/builds into the current directory
 - **kas overlays** (compose with `:`): `kas/debug.yaml` (verbose-boot wks), `kas/hw.yaml` (MACHINE=genericx86-64, USB-bootable kiosk for bare metal — adds Intel GPU firmware + i915/xe/amdgpu modules via gpu.cfg)
 - **Graphical QEMU:** `runqemu wilhelmos-image-kiosk kvm sdl slirp serialstdio` inside `kas shell` (kas passes DISPLAY/XAUTHORITY through via the `env:` block); add `wic ovmf` to boot the real UEFI/systemd-boot chain; add `gl` for virgl acceleration
 

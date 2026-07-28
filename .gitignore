@@ -1,6 +1,6 @@
-poky/
-meta-openembedded/
 # --- Yocto output directories ---
+# Build state lives in KAS_WORK_DIR (../wilhelmos-build, see Makefile);
+# these entries are guardrails in case kas is ever run without it.
 build/
 downloads/
 sstate-cache/
@@ -29,6 +29,3 @@ cache/
 .DS_Store
 .vscode/
 .idea/
-openembedded-core/
-bitbake/
-meta-yocto/

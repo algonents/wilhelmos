@@ -57,8 +57,12 @@ sudo dnf install -y chrpath lz4 rpcgen perl
 make build          # kas build kas/qemu-wrynose.yaml
 ```
 
-Downloads and sstate are shared one level above the checkout
-(`../downloads`, `../sstate-cache`) to speed up rebuilds.
+All build-system state — the pinned upstream layer clones, `build/`,
+`downloads/`, `sstate-cache/` — lives outside the checkout in
+`KAS_WORK_DIR` (default `../wilhelmos-build`, exported by the Makefile).
+The repository itself contains only WilhelmOS sources. When invoking
+`kas` directly instead of via `make`, export `KAS_WORK_DIR` first (or
+use `make build KAS_FILE=...`) so build state stays out of the checkout.
 
 ### Debug image variant
 
@@ -66,7 +70,7 @@ Builds the same image with verbose console/systemd boot logging on the kernel
 cmdline (useful when dd'ing the `.wic` to USB for bare-metal debugging):
 
 ```bash
-kas build kas/qemu-wrynose.yaml:kas/debug.yaml
+make build KAS_FILE=kas/qemu-wrynose.yaml:kas/debug.yaml
 ```
 
 ## Run in QEMU

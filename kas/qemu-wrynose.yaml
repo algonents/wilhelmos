@@ -20,7 +20,16 @@ env:
 # uses openembedded-core + bitbake + meta-yocto (meta-poky/meta-yocto-bsp)
 # as separate repos.
 # To update a pin: git ls-remote <url> refs/heads/wrynose (bitbake: 2.18)
+#
+# Upstream repos are cloned into KAS_WORK_DIR (set by the Makefile to
+# ../wilhelmos-build), keeping this repository free of build-system state.
+# The url-less "wilhelmos" entry is this repository itself, wherever it
+# is checked out; kas never modifies it.
 repos:
+  wilhelmos:
+    layers:
+      meta-wilhelmos:
+
   openembedded-core:
     url: https://git.openembedded.org/openembedded-core
     branch: wrynose
@@ -50,14 +59,10 @@ repos:
     layers:
       meta-oe:
 
+# TOPDIR is KAS_WORK_DIR/build, so the shared caches live in KAS_WORK_DIR
+# next to the upstream clones.
 local_conf_header:
   base: |
     DL_DIR ?= "${TOPDIR}/../downloads"
     SSTATE_DIR ?= "${TOPDIR}/../sstate-cache"
     EXTRA_IMAGE_FEATURES:remove = "debug-tweaks"
-
-bblayers_conf_header:
-  base: |
-    BBLAYERS:append = " \
-      ${TOPDIR}/../meta-wilhelmos \
-    "
