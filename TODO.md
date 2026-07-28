@@ -50,6 +50,7 @@ Stack validation is DONE (2026-07-24, see DESIGN.md §4): the wilhelm_renderer_i
 - [ ] Evaluate image size impact (Mesa + GPU drivers + fonts vs base image)
 - [ ] Cross-compile sky_guard_client for the target (wilhelm_renderer cross-compile proven by the demo recipe)
 - [ ] Merge + publish the feat/kiosk-validation crate changes (version bumps, crates.io), then switch wilhelm-renderer-demo to crate:// fetching
+- [ ] Fix shutdown hang on cage-kiosk: `shutdown now` from tty2 leaves the stop job waiting on cage (no `TimeoutStopSec`, so systemd waits the 90s default before SIGKILL; cage/app don't exit on SIGTERM while the seat is disabled after a VT switch — DRM FD paused, no frame callbacks). Bound it with `TimeoutStopSec=` in cage-kiosk.service; investigate clean SIGTERM handling in the kiosk framework when the surface is hidden
 
 ### Option 1 — TTY mode (server / maintenance)
 
@@ -58,8 +59,19 @@ Used for sky_guard_server (headless, no GPU) or system maintenance access.
 - [ ] systemd getty autologin override for `wilhelmos` user on tty1
 - [ ] Auto-launch TUI or shell from user profile
 - [ ] Evaluate PSF fonts for console use (Terminus, Spleen)
+- [ ] Fix console font reset on GPU driver bind: Terminus (ter-u32n) is applied early against SimpleDRM, but when the native driver (amdgpu/i915) takes over fbcon the vtcon re-registers and consoles fall back to the kernel's built-in 8×16 font — unreadable on high-DPI panels. The udev re-trigger (90-vconsole.rules) fires but systemd-vconsole-setup can't copy fonts to remaining VTs (`KD_FONT_OP_GET failed: Invalid argument`/`I/O error` — tty1 is in graphics mode under cage). Candidate fix: build `CONFIG_FONT_TER16x32=y` into the kernel and select it via `fbcon=font:TER16x32` on the cmdline, making the fbcon default itself Terminus — immune to vtcon handover
 - [ ] Set framebuffer resolution via kernel `video=` parameter
 - [x] Keep login shell on tty2 (`Alt+F2`) for maintenance access when running kiosk mode (getty@tty2 enabled by wilhelmos-kiosk-session)
+- [ ] Diagnostics TUI on tty2 (kiosk mode): first-class operator surface showing essential diagnostics at a glance (service health, GPU/display state, network, recent faults) without requiring shell commands — tty2 is as important as the kiosk app itself, not merely maintenance access; depends on the deterministic console font fix (fbcon TER16x32) and pairs with the `video=` per-deployment resolution knob
+
+---
+
+## Knowledge Transfer (teaching sessions)
+
+Guided walkthroughs at teaching pace — understanding the system, not just operating it:
+
+- [ ] Boot sequence walkthrough: UEFI → systemd-boot → kernel (SimpleDRM → native GPU driver bind) → systemd targets → seatd/cage → kiosk app (requested 2026-07-25)
+- [ ] Bare-metal post-mortem diagnosis & journal reading (requested 2026-07-27): the persistent-journald workflow — mounting the stick, copying the journal, `journalctl -D`/`--list-boots`/`-F _BOOT_ID`/`-p err`, identifying hardware from DMI/PCI lines, spotting firmware-load failures, following a systemd shutdown sequence, and how the udev → vconsole-setup → fbcon interplay was traced (use the GMKtec amdgpu-firmware and font-reset cases as worked examples)
 
 ---
 

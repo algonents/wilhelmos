@@ -6,4 +6,4 @@ part /boot --source bootimg-efi --sourceparams="loader=systemd-boot" --label boo
 
 part / --source rootfs --fstype=ext4 --label rootfs --align 4096
 
-bootloader --ptable=gpt --timeout=3 --append="root=PARTLABEL=rootfs rootwait"
+bootloader --ptable=gpt --timeout=3 --append="root=PARTLABEL=rootfs rootwait fbcon=font:TER16x32"

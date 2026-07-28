@@ -1,2 +1,2 @@
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
-SRC_URI:append = " file://usb-root.cfg file://hardening.cfg file://gpu.cfg"
+SRC_URI:append = " file://usb-root.cfg file://hardening.cfg file://gpu.cfg file://console-font.cfg"
