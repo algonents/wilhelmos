@@ -16,8 +16,10 @@ inherit core-image
 # Reuse Poky's core-image-minimal definition
 require ${COREBASE}/meta/recipes-core/images/core-image-minimal.bb
 
-# WilhelmOS-specific additions
-IMAGE_INSTALL:append = " util-linux sudo nano kbd wh-terminus-console-font wilhelmos-vconsole-conf wilhelmos-sudoers wilhelmos-journald-conf"
+# WilhelmOS-specific additions. efibootmgr: UEFI boot-entry management
+# from the maintenance console (install to internal disk, entry cleanup)
+# without external media.
+IMAGE_INSTALL:append = " util-linux sudo nano kbd efibootmgr wh-terminus-console-font wilhelmos-vconsole-conf wilhelmos-sudoers wilhelmos-journald-conf"
 
 # logging is done by systemd. Disable BusyBox logging
 IMAGE_INSTALL:remove = "busybox-syslog"
