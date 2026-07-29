@@ -4,7 +4,8 @@
 # debugging; runqemu constructs its own cmdline and mostly ignores this.
 # Select via: kas build kas/qemu-kirkstone.yaml:kas/debug.yaml
 
-part /boot --source bootimg-efi --sourceparams="loader=systemd-boot" --label boot --active --align 4096
+# --no-fstab-update: see wilhelmos-efi.wks — keep both layouts in sync
+part /boot --source bootimg-efi --sourceparams="loader=systemd-boot" --label boot --active --align 4096 --no-fstab-update
 
 part / --source rootfs --fstype=ext4 --label rootfs --align 4096
 
