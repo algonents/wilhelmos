@@ -24,6 +24,15 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the phased roadmap and sequencing ratio
   - [x] Add section comments explaining each config group
 - [x] Clean up `wilhelmos-efi.wks`: remove commented-out QEMU debug boot parameters or move to a separate debug WKS (now `wilhelmos-efi-debug.wks` + `kas/debug.yaml`)
 
+## Disk Install Follow-ups (from first internal-disk install, 2026-07-29)
+
+- [ ] Grow the rootfs on first boot after disk install: the wks layout is ~3G, leaving the rest of an internal disk unpartitioned (systemd-repart or growpart; ties into the A/B slot layout decision in DESIGN.md §6)
+- [ ] Decision record: emergency/rescue mode with locked root = unreachable console on an appliance (fail-closed vs. maintenance credential; observed during the fstab boot failure)
+- [ ] Report upstream wic bug: per-partition `--no-fstab-update` parsed but ignored by wic 0.3.1 `update_fstab` (workaround: imager-global flag via `WIC_CREATE_EXTRA_ARGS`, see wilhelmos-image-base.bb)
+- [ ] Deduplicate `root=` on the kernel cmdline: wks `--append` duplicates the `root=` that wic already generates (installer's sed handles it with /g, but the duplication is noise)
+- [ ] Document the disk-install procedure (wicstore partition + `wilhelmos-install`) in README
+- [ ] GMKtec BIOS: RTC is ~6 weeks behind; NTP/time-sync story for deployed ground equipment
+
 ## Low Priority
 
 - [x] Update KAS header version from 11 to latest supported (now 14, requires kas >= 4.0)
