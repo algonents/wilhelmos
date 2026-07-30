@@ -26,7 +26,7 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the phased roadmap and sequencing ratio
 
 ## Disk Install Follow-ups (from first internal-disk install, 2026-07-29)
 
-- [ ] Grow the rootfs on first boot after disk install: the wks layout is ~3G, leaving the rest of an internal disk unpartitioned (systemd-repart or growpart; ties into the A/B slot layout decision in DESIGN.md §6)
+- [x] Grow the rootfs to fill the target disk — done at install time in `wilhelmos-install` (sfdisk grow + resize2fs), not on first boot: no extra boot-time machinery in the image, and it can't trigger on stick boots. Interim until the Phase 2 A/B slot layout (DESIGN.md §6) re-lays the disk
 - [ ] Decision record: emergency/rescue mode with locked root = unreachable console on an appliance (fail-closed vs. maintenance credential; observed during the fstab boot failure)
 - [ ] Report upstream wic bug: per-partition `--no-fstab-update` parsed but ignored by wic 0.3.1 `update_fstab` (workaround: imager-global flag via `WIC_CREATE_EXTRA_ARGS`, see wilhelmos-image-base.bb)
 - [ ] Deduplicate `root=` on the kernel cmdline: wks `--append` duplicates the `root=` that wic already generates (installer's sed handles it with /g, but the duplication is noise)
