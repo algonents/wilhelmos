@@ -56,6 +56,7 @@ WilhelmOS supports two boot modes. **Option 2 is the primary mode** — it runs 
 - **Custom layer:** `meta-wilhelmos/` (priority 6)
 - **All build state lives outside the repo** in `KAS_WORK_DIR` (default `../wilhelmos-build`, exported by the Makefile): upstream layer clones, `build/`, `downloads/`, `sstate-cache/`. The checkout contains only WilhelmOS sources. When running `kas` directly (not via `make`), export `KAS_WORK_DIR` first — otherwise kas clones/builds into the current directory
 - **kas overlays** (compose with `:`): `kas/debug.yaml` (verbose-boot wks), `kas/hw.yaml` (MACHINE=genericx86-64, USB-bootable kiosk for bare metal — adds Intel GPU firmware + i915/xe/amdgpu modules via gpu.cfg)
+- **Flashing the install stick** (after a `kas/hw.yaml` build): `sudo sh scripts/reflash-stick.sh /dev/sdX` — flashes the built kiosk image, recreates the `wicstore` partition (image + sha256 for `wilhelmos-install`), and verifies the flashed rootfs against the build tree. Always use it instead of hand-assembling dd/parted steps
 - **Graphical QEMU:** `runqemu wilhelmos-image-kiosk kvm sdl slirp serialstdio` inside `kas shell` (kas passes DISPLAY/XAUTHORITY through via the `env:` block); add `wic ovmf` to boot the real UEFI/systemd-boot chain; add `gl` for virgl acceleration
 
 ## Bare-Metal Diagnosis
