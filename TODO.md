@@ -30,7 +30,7 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the phased roadmap and sequencing ratio
 - [ ] Decision record: emergency/rescue mode with locked root = unreachable console on an appliance (fail-closed vs. maintenance credential; observed during the fstab boot failure)
 - [ ] Report upstream wic bug: per-partition `--no-fstab-update` parsed but ignored by wic 0.3.1 `update_fstab` (workaround: imager-global flag via `WIC_CREATE_EXTRA_ARGS`, see wilhelmos-image-base.bb)
 - [ ] Deduplicate `root=` on the kernel cmdline: wks `--append` duplicates the `root=` that wic already generates (installer's sed handles it with /g, but the duplication is noise)
-- [ ] Document the disk-install procedure (wicstore partition + `wilhelmos-install`) in README
+- [x] Document the disk-install procedure — docs/INSTALLATION.md (install medium anatomy, flash + install steps, scaling/fleet roadmap); link it from README when the README gets its next pass
 - [ ] GMKtec BIOS: RTC is ~6 weeks behind; NTP/time-sync story for deployed ground equipment
 
 ## Low Priority
