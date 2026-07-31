@@ -1,6 +1,7 @@
 #!/bin/sh
 # wilhelmos-install — write the WilhelmOS disk image from the wicstore
-# partition to a target disk and register a UEFI boot entry.
+# partition to a target disk, grow the root partition to fill it, and
+# register a UEFI boot entry.
 #
 # The install medium carries the image as a third partition labeled
 # "wicstore" holding wilhelmos.wic (+ optional wilhelmos.wic.sha256).
@@ -53,8 +54,8 @@ esac
 
 # Partition node naming: nvme0n1 -> nvme0n1p1, sda -> sda1
 case "$TARGET" in
-*[0-9]) TARGET_ESP=${TARGET}p1 ;;
-*)      TARGET_ESP=${TARGET}1 ;;
+*[0-9]) TARGET_ESP=${TARGET}p1 TARGET_ROOT=${TARGET}p2 ;;
+*)      TARGET_ESP=${TARGET}1  TARGET_ROOT=${TARGET}2 ;;
 esac
 
 echo "WilhelmOS will ERASE this disk and everything on it:"
@@ -85,6 +86,20 @@ dd if="$WIC" of="$TARGET" bs=4M
 sync
 blockdev --rereadpt "$TARGET"
 udevadm settle
+
+echo "Growing root partition to fill $TARGET..."
+# The dd'd image carries an image-sized GPT: put the backup header back
+# at the end of the disk, then extend partition 2 into the freed space.
+# sfdisk -N only changes the fields given (", +" = size to maximum), so
+# the partition's start, type, UUID and PARTLABEL survive.
+sfdisk -q --relocate gpt-bak-std "$TARGET"
+echo ", +" | sfdisk -q -N 2 "$TARGET"
+blockdev --rereadpt "$TARGET"
+udevadm settle
+# resize2fs refuses an unchecked filesystem; e2fsck -p exits 1/2 when it
+# repaired something, which is still success for our purposes.
+e2fsck -f -p "$TARGET_ROOT" || [ $? -le 2 ]
+resize2fs "$TARGET_ROOT"
 
 echo "Giving the installed disk its own boot identity..."
 sfdisk -q --part-label "$TARGET" 2 wilhelmos-root
