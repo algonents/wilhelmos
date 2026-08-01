@@ -26,7 +26,7 @@ WilhelmOS is positioned as COTS software under ED-109A Section 12.4. The system 
 
 ## User Experience
 
-WilhelmOS supports two boot modes. **Option 2 is the primary mode** — it runs the sky_guard_client situation display, which is the core product.
+WilhelmOS is organized into **profiles** — named platform compositions (image + session machinery + application contract), see docs/DESIGN.md §10. Two are implemented (the boot modes below); a third, the **SPA profile** (fullscreen closed-environment web app via Cog/WPE WebKit, `wilhelmos-image-spa`), is designed but not yet built. **Option 2 is the primary mode** — it runs the sky_guard_client situation display, which is the core product.
 
 ### Option 1 — TTY mode (server / maintenance)
 - Boot → systemd → auto-login → TUI on framebuffer console
