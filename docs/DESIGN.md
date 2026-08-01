@@ -789,3 +789,118 @@ bit-for-bit from pinned inputs. Hardening that would be invalidated by the
 kiosk stack (service stripping, partition/integrity design) waits until the
 real payload exists; hardening that survives it (kernel flags, persistent
 logging, credential policy) landed in Phase 0.
+
+## 10. Platform profiles
+
+*(Concept introduced 2026-08-01; SPA profile decisions recorded the same
+day. Numbered after §9 so the §4–§9 cross-references embedded in recipes
+and docs stay valid — this section is conceptually a peer of §7.)*
+
+A **profile** is a named, buildable platform composition: an image recipe
+plus its session machinery, its application contract, and the
+certification-surface posture that composition implies. Profiles are
+orthogonal to §6's *workload/equipment classes*: the class decides update
+granularity and assurance posture (CWP: monolithic baseline; SWIM server:
+sealed platform + per-service payloads); the profile decides what runs on
+top of the boot chain. WilhelmOS has two implemented profiles and one
+planned:
+
+| Profile | Image | Session | App contract | Runtime |
+|---|---|---|---|---|
+| **services** | wilhelmos-image-base | getty/TUI; systemd services | §5 patterns | native daemons |
+| **kiosk** | wilhelmos-image-kiosk | cage on tty1, getty on tty2 | kiosk-app ([KIOSK-CONTRACT.md](KIOSK-CONTRACT.md)) | native GL application |
+| **spa** *(planned)* | wilhelmos-image-spa | same cage session pattern | spa-app (future SPA-CONTRACT.md) | Cog → WPE WebKit |
+
+All profiles share the base image, boot chain, user model, journald
+policy, tty2 maintenance console, and (for CWP-class profiles) the
+monolithic A/B update story. The naming conventions mirror deliberately:
+`wilhelmos-image-<profile>`, `wilhelmos-<profile>-session`,
+`<PROFILE>_APP` image variable, `<profile>-app.bbclass`,
+`virtual/<profile>-app`.
+
+### SPA profile (decided 2026-08-01, not yet implemented)
+
+Some integrators will deploy a **single-page web application** rather
+than a native GL application: the same sealed appliance, but the
+fullscreen payload is a browser rendering an SPA in a closed
+environment. Stack:
+
+```
+systemd → cage → cog → WPEWebKit → EGL → DRM/KMS
+```
+
+**Engine: WPE WebKit + Cog (decided).** WPE is the upstream embedded
+port of WebKit (maintained in-project by Igalia); Cog is its minimal
+kiosk launcher — load one URL fullscreen, no chrome, no tabs, no
+settings; the closed environment is what the launcher *is*, not a
+locked-down configuration of a desktop browser. Rationale: Safari-class
+SPA compatibility (modern JS, WebGL 2, WASM, WebSockets — standard
+React/Vue/Angular apps run unmodified); tens of MB instead of
+Chromium's ~200+; two feature releases/year with maintained security
+branches, compatible with the platform's baseline cadence; and RDK-scale
+embedded deployment (hundreds of millions of set-top boxes) giving a
+usable §12.3.4 service-experience argument. `meta-webkit` has wrynose
+branches (verified 2026-08-01). **Fallback (documented, not built):**
+Chromium kiosk via `meta-browser` (wrynose branch exists) for a client
+whose SPA requires Chrome-only APIs (WebUSB/WebSerial/WebHID, early
+WebGPU); its cost — multi-hour builds, monthly majors, an SBOM and
+patch cadence that fight the platform's — is why it is the fallback.
+Honest cost either way: any real engine is millions of lines; the SPA
+profile's COTS surface is an order of magnitude larger than the native
+kiosk's. That trade-off is the client's to make per equipment and AL —
+which is precisely what profiles are for.
+
+**Session architecture: cage reused.** Cog runs as a Wayland client
+under cage, so the SPA profile inherits the kiosk session machinery
+unchanged (seatd, render-node wait, restart policy, tty2, and the
+`WILHELMOS_UI_SCALE` knob — mapped to the web view's device scale
+factor). Cog's direct-DRM backend is noted as a possible later
+optimization that would remove cage from this profile's stack; not the
+baseline.
+
+**SPA delivery: both models, bundled = reference (decided).** The
+contract primitive is a URL. The reference deployment bakes the SPA
+static bundle into the image as an ordinary package — offline-capable,
+and the §6 CWP monolithic story (one artifact, one SBOM, one baseline)
+holds exactly as for the native kiosk. Remote-URL deployments (the
+integrator's backend serves the frontend) are supported and will be
+documented with their CM implication spelled out: the application
+version then leaves the equipment baseline, which materially weakens
+the §6 story and moves frontend CM to the server side.
+
+**Media stack: off by default (decided).** GStreamer (HTML5
+audio/video) is excluded from the default profile — dashboards and
+situation displays rarely need it, and it is a large dependency
+subtree in the SBOM. Documented PACKAGECONFIG-level option per
+deployment (e.g. camera feeds on a tower display).
+
+**Closed-environment requirements** (to be enforced in Phase C/D):
+single URL at launch; navigation-policy origin allowlist enforced in
+the UI process (not in page JS); Web Inspector disabled or compiled
+out in production images; no downloads, file pickers, or printing;
+per-feature switches default-off (clipboard, geolocation, media
+capture); WPE web-process sandbox active (bubblewrap — requires a
+kernel user-namespace config check, flagged for Phase B).
+
+**Open questions (resolved in Phase B, recorded here so they aren't
+lost):** how the bundled SPA is served to the engine (`file://` vs a
+custom URI-scheme handler vs a localhost static server — CORS and
+ES-module constraints differ); the config-injection analog of the
+kiosk profile's env-var drop-in for web apps (e.g. a generated
+`config.json` in the web root carrying server URLs); gRPC backends
+need a gRPC-Web proxy (browsers cannot speak native gRPC — true of
+any engine).
+
+**Phasing:**
+
+- **Phase A (this section):** concept + decision record.
+- **Phase B — prototype:** pin `meta-webkit`, build cog + wpewebkit
+  under cage in QEMU, load a sample SPA, verify the sandbox/userns
+  kernel requirements, resolve the open questions above.
+- **Phase C — contract machinery:** `spa-app.bbclass`,
+  `wilhelmos-image-spa`, `wilhelmos-spa-session`, a reference SPA
+  (the `wilhelmos-kiosk-demo` analog), `docs/SPA-CONTRACT.md`.
+- **Phase D — closure:** production hardening of the
+  closed-environment requirements; certification notes recording the
+  per-profile COTS surface (browser engine vs native stack) so
+  integrators can choose profile per AL with eyes open.
