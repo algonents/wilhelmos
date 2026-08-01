@@ -9,9 +9,11 @@ HOMEPAGE = "https://github.com/algonents/wilhelmos_kiosk_demo"
 LICENSE = "MIT & Zlib & FTL"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=b6da98d9ba2b3775998e4e30a3ea717e"
 
-inherit cargo cargo-update-recipe-crates pkgconfig features_check
+# kiosk-app claims the §7 composition-contract role (virtual/kiosk-app,
+# /usr/libexec/kiosk-app exec path) — see docs/KIOSK-CONTRACT.md.
+inherit cargo cargo-update-recipe-crates pkgconfig kiosk-app
 
-REQUIRED_DISTRO_FEATURES = "wayland opengl"
+KIOSK_APP_BINARY = "${bindir}/wilhelmos_kiosk_demo"
 
 SRC_URI = "git://github.com/algonents/wilhelmos_kiosk_demo.git;protocol=https;branch=master"
 # v0.3.1 tag
@@ -38,16 +40,9 @@ DEPENDS = " \
 export GLRENDERER_BUILD_X11 = "OFF"
 export GLRENDERER_LINK_GL = "OFF"
 
-# §7 composition contract: exactly one installed package provides the
-# kiosk application at the stable path cage-kiosk.service execs.
-PROVIDES = "virtual/kiosk-app"
-RPROVIDES:${PN} = "kiosk-app"
-
 do_install() {
     install -Dm0755 ${B}/target/${CARGO_TARGET_SUBDIR}/wilhelmos_kiosk_demo \
         ${D}${bindir}/wilhelmos_kiosk_demo
-    install -d ${D}${libexecdir}
-    ln -s ${bindir}/wilhelmos_kiosk_demo ${D}${libexecdir}/kiosk-app
 }
 
 # GLFW loads its platform libraries with dlopen at runtime; none of these
