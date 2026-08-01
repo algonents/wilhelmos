@@ -124,9 +124,10 @@ Supports the COTS software restriction of functionality strategy (Section 12.4.1
 Safety monitoring allows the monitored software to be assigned the AL associated with loss of the monitored function, provided the monitor is independent and at the appropriate AL.
 
 - [ ] Enable hardware watchdog timer support (kernel + systemd `RuntimeWatchdogSec`) — Phase 2, see DESIGN.md §6
+- [ ] Evaluate companion safety MCU (Zephyr-class) as independent external watchdog/health monitor for display equipment — bounds the Linux TCB with a small high-assurance component (flagged in the base-OS decision record, DESIGN.md §11)
 - [ ] Configure systemd service restart policies for critical services — Phase 2
 - [x] Add persistent logging to survive reboots (`Storage=persistent` via `wilhelmos-journald-conf` + `VOLATILE_LOG_DIR = "no"`)
-- [ ] Implement the two-path update architecture (decided, see DESIGN.md §6): A/B platform slots ("OS patching", infrequent) + independent application slot pair (frequent, emergency-capable), atomic image-based with rollback (Section 2.5.4); candidate tooling RAUC
+- [ ] Implement the monolithic A/B update architecture (decided 2026-07-25, supersedes the earlier two-path design — see DESIGN.md §6): platform + application as one image into A/B rootfs slots, atomic with rollback (Section 2.5.4); GPT reserves an unused app-slot pair as the reversibility hedge; candidate tooling RAUC (swupdate fallback), decision falls with the Phase 2 partition-layout design
 
 ### COTS Evidence Package (ED-109A Section 12.4)
 

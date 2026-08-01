@@ -904,3 +904,93 @@ any engine).
   closed-environment requirements; certification notes recording the
   per-profile COTS surface (browser engine vs native stack) so
   integrators can choose profile per AL with eyes open.
+
+## 11. Base OS: why Linux (decision record, 2026-08-02)
+
+The choice of Linux as the WilhelmOS foundation predates this document;
+it is recorded here explicitly — with the alternatives considered and
+the triggers that would reopen it — because it is the first question a
+sophisticated integrator or auditor asks, and "inertia" is not an
+answer.
+
+**Decision: Linux (Yocto-built), with conviction — for the AL3–AL5
+ground-equipment scope this platform declares (§1).**
+
+### Rationale
+
+1. **Functional fit.** The product envelope — Mesa/DRM/KMS GPU kiosk on
+   arbitrary COTS x86 hardware with integrated graphics, a Wayland
+   compositor, async Rust applications (tokio/tonic), systemd
+   supervision (§2.4.3 machinery), SWIM services (§5), and a browser
+   profile (§10) — is fully served only by Linux. This alone is
+   decisive for the main equipment classes.
+2. **Precedent and the ED-109A argument.** Ground CNS/ATM is the domain
+   where Linux is settled practice: the major CWP/FDP/tower product
+   families run on it, and ED-109A §12.4 (COTS) + §12.3.4 (service
+   experience) exist precisely to admit this. WilhelmOS executes the
+   industry-standard argument rather than pioneering one; ongoing work
+   such as the Linux Foundation's ELISA project keeps strengthening it.
+   The platform deliberately claims **AL3–AL5 only** — the levels where
+   this argument is accepted. Nothing here proposes Linux for AL1/AL2
+   functions.
+3. **The evidence machinery is the moat.** Yocto is what makes the
+   certification story *mechanical*: pinned inputs (SHAs, checksummed
+   sources), bit-reproducible builds, per-image SPDX SBOMs,
+   buildhistory diffs. The tag → SHA → identical-image chain validated
+   2026-08-01 is Yocto machinery; no alternative OS ecosystem offers an
+   equivalent, and on a commercial RTOS it would be rebuilt from
+   scratch against proprietary tooling.
+
+### Alternatives considered (2026-08-02)
+
+- **Zephyr** — category-inappropriate as the base: an RTOS for
+  MCU-class devices (no MMU process isolation, no GPU/display/browser
+  stack, no POSIX multi-process). Its genuine attraction — the IEC
+  61508 SIL 3 certification effort and an auditably small code base —
+  points at a *supporting* role instead: a *companion safety MCU*
+  acting as independent external watchdog/health monitor for the
+  display equipment, bounding the Linux TCB with a tiny high-assurance
+  component and strengthening the §2.4.3 argument. Flagged as a future
+  option (TODO), not committed.
+- **Certified commercial RTOSes (QNX, VxWorks Cert, INTEGRITY-178,
+  PikeOS)** — the serious alternative. QNX is the strongest: certified
+  microkernel (IEC 61508 SIL3 / ISO 26262 ASIL D), POSIX, a real
+  compositor, automotive cockpit deployments, a Rust toolchain. Rejected
+  for this product because adoption would (a) invert the business
+  model — WilhelmOS *is* the vendor of the platform evidence pack;
+  on QNX it becomes a royalty-bearing reseller of someone else's kit;
+  (b) shrink hardware support to vendor BSPs, forfeiting the
+  any-COTS-mini-PC-with-iGPU story; (c) kill or cripple the browser
+  profile and thin out the Rust ecosystem; and (d) still leave the
+  ED-109A argument to be constructed — their pedigrees are
+  IEC 61508/DO-178C-shaped, not ED-109A evidence.
+- **BSDs (FreeBSD/OpenBSD)** — licensing is attractive, but the DRM/GPU
+  stack trails Linux, there is no systemd (the §2.4.3 supervision
+  design would need rebuilding), no Yocto-equivalent evidence
+  machinery, and the ground-ATM service-experience base is far
+  thinner. No compensating advantage for this domain.
+- **seL4 / microkernel research stacks** — the strongest assurance
+  story on paper (formal verification), but everything above the
+  kernel (GPU, network, display, POSIX personality) would be
+  project-scope; years of platform work for a scope this product does
+  not claim (AL1/AL2).
+
+### Architecture answer for higher-AL demands
+
+If a deployment ever requires an AL1/AL2 function, the answer is
+**architecture, not base replacement**: put that function on dedicated
+equipment with a scope small enough to certify (Zephyr- or QNX-class),
+or use a separation-kernel/hypervisor layout (e.g. PikeOS hosting the
+Linux payload) for that specific deployment — §2.4.1 partitioning at
+equipment or hypervisor granularity. The platform's job is to make the
+AL3–AL5 tier cheap and clean; that is the market gap it fills.
+
+### Revisit triggers
+
+- A client demands AL1/AL2 assurance for a function currently hosted on
+  the platform (→ architecture answer above, before base replacement).
+- The hardware strategy moves away from COTS x86/iGPU toward
+  vendor-BSP SoCs (weakens argument (1) and the anti-BSP point).
+- The regulatory environment stops accepting COTS/service-experience
+  arguments for Linux at AL3 (would be an industry-wide event; monitor
+  via ELISA and ED-109A successor documents).
