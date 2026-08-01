@@ -711,6 +711,14 @@ Two composition contracts make this concrete (implemented 2026-07-25):
    whether the application is baked into the rootfs or mounted from an
    app slot.
 
+Both contracts were mechanized 2026-08-01 (`kiosk-app.bbclass`): the
+application recipe inherits the class and sets `KIOSK_APP_BINARY`; the
+class claims `virtual/kiosk-app`, installs the exec path, and fails the
+build if the binary is missing — and the kiosk image fails at rootfs
+assembly if the selected `KIOSK_APP` provided no executable
+`/usr/libexec/kiosk-app`. The integrator-facing interface description
+is [KIOSK-CONTRACT.md](KIOSK-CONTRACT.md).
+
 The reference application lives in its own repo
 (`wilhelmos_kiosk_demo`, the integrator's worked example — standalone
 binary crate, committed lockfile, release tags, zero git dependencies in
