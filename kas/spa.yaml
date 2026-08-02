@@ -1,0 +1,24 @@
+# Overlay: SPA profile (DESIGN.md §10) — adds the meta-webkit layer
+# (WPE WebKit + Cog) and switches the build target to the SPA image.
+# Compose LAST so its target wins:
+#   kas build kas/qemu-wrynose.yaml:kas/spa.yaml            # QEMU
+#   kas build kas/qemu-wrynose.yaml:kas/hw.yaml:kas/spa.yaml # bare metal
+header:
+  version: 14
+
+target: wilhelmos-image-spa
+
+repos:
+  meta-webkit:
+    url: https://github.com/Igalia/meta-webkit
+    branch: wrynose
+    commit: 13a0e5a5cc49516e3e3c91fdc5e7033e3c3dfb73
+
+local_conf_header:
+  spa-profile: |
+    # meta-webkit carries stale copies of the WPE sandbox helpers
+    # (bubblewrap 0.8.0 fails to compile under the C23-default
+    # toolchain); prefer meta-oe's current recipes, which otherwise
+    # lose to meta-webkit's higher layer priority (7 > 6).
+    PREFERRED_VERSION_bubblewrap = "0.11.2"
+    PREFERRED_VERSION_xdg-dbus-proxy = "0.1.7"

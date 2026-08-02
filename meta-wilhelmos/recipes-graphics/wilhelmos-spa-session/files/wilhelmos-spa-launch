@@ -1,0 +1,13 @@
+#!/bin/sh
+# WilhelmOS SPA session launcher (DESIGN.md §10): execs Cog fullscreen
+# as the single Wayland client under cage.
+#
+# WILHELMOS_SPA_URL   deployment override (systemd drop-in); default is
+#                     the bundled web root — the spa-app contract path.
+# WILHELMOS_UI_SCALE  mapped to Cog's output device scale factor, same
+#                     deployment knob as the kiosk profile.
+set -- --platform=wl
+if [ -n "${WILHELMOS_UI_SCALE}" ]; then
+    set -- "$@" "--device-scale=${WILHELMOS_UI_SCALE}"
+fi
+exec /usr/bin/cog "$@" "${WILHELMOS_SPA_URL:-file:///usr/share/spa-app/index.html}"
