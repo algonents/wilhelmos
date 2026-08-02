@@ -25,6 +25,13 @@ TTYReset=yes
 TTYVHangup=yes
 TTYVTDisallocate=yes
 UtmpIdentifier=tty1
+# The session must own the active VT: on boot tty1 is active anyway,
+# but on a restart triggered from the maintenance console (e.g.
+# wilhelmos-spa-url on tty2) the active VT is tty2 — without this the
+# new compositor session comes up over the operator's console and the
+# main view is lost. "+" = run privileged (the unit runs as kiosk),
+# "-" = never block session start if chvt fails.
+ExecStartPre=+-/usr/bin/chvt 1
 # seatd.service is Type=simple, so After= does not imply its socket exists
 # yet; gate on actual readiness (up to 5s) to avoid a first-boot restart.
 ExecStartPre=/bin/sh -c 'n=0; while [ ! -S /run/seatd.sock ] && [ $n -lt 50 ]; do sleep 0.1; n=$((n+1)); done'
