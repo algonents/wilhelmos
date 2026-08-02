@@ -1,0 +1,72 @@
+#!/bin/sh
+# wilhelmos-spa-url — operator tool (tty2) for the SPA profile:
+# view or change the URL the kiosk browser loads, at runtime, without
+# rebuilding the image. Writes an /etc systemd drop-in that overrides
+# the image's baked configuration (50- sorts after the image's 10-/20-
+# drop-ins, and /etc wins over /usr/lib for equal names), then restarts
+# the session. See docs/WEBKIT.md and DESIGN.md §10.
+set -eu
+
+DROPIN_DIR=/etc/systemd/system/cage-spa.service.d
+DROPIN=$DROPIN_DIR/50-operator-url.conf
+
+usage() {
+    cat >&2 <<EOF
+usage: wilhelmos-spa-url show           # effective URL + its source
+       wilhelmos-spa-url set <url>      # switch to <url> (http/https/file)
+       wilhelmos-spa-url clear          # back to the image default
+'set' and 'clear' need root (sudo) and restart the display session.
+EOF
+    exit 1
+}
+
+need_root() {
+    [ "$(id -u)" -eq 0 ] || { echo "error: run with sudo" >&2; exit 1; }
+}
+
+apply() {
+    systemctl daemon-reload
+    systemctl restart cage-spa.service
+    echo "cage-spa restarted."
+}
+
+case "${1:-}" in
+show)
+    env_url=$(systemctl show -p Environment cage-spa.service \
+        | tr ' ' '\n' | sed -n 's/^WILHELMOS_SPA_URL=//p' | tail -n 1)
+    if [ -n "$env_url" ]; then
+        if [ -f "$DROPIN" ]; then
+            echo "URL: $env_url (operator override: $DROPIN)"
+        else
+            echo "URL: $env_url (image configuration)"
+        fi
+    else
+        echo "URL: file:///usr/share/spa-app/index.html (bundled web root, launcher default)"
+    fi
+    ;;
+set)
+    [ $# -eq 2 ] || usage
+    need_root
+    case "$2" in
+        http://*|https://*|file:///*) ;;
+        *) echo "error: URL must start with http://, https:// or file:///" >&2; exit 1 ;;
+    esac
+    mkdir -p "$DROPIN_DIR"
+    printf '[Service]\nEnvironment=WILHELMOS_SPA_URL=%s\n' "$2" > "$DROPIN"
+    chmod 0644 "$DROPIN"
+    apply
+    ;;
+clear)
+    need_root
+    if [ -f "$DROPIN" ]; then
+        rm -f "$DROPIN"
+        rmdir "$DROPIN_DIR" 2>/dev/null || true
+        apply
+    else
+        echo "no operator override set; nothing to do."
+    fi
+    ;;
+*)
+    usage
+    ;;
+esac

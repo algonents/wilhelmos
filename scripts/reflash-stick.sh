@@ -18,7 +18,8 @@ set -eu
 REPO=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 KAS_WORK_DIR=${KAS_WORK_DIR:-$REPO/../wilhelmos-build}
 MACHINE=genericx86-64
-IMAGE=wilhelmos-image-kiosk
+# Override for other profiles (DESIGN.md §10), e.g. IMAGE=wilhelmos-image-spa
+IMAGE=${IMAGE:-wilhelmos-image-kiosk}
 
 DEPLOY=$KAS_WORK_DIR/build/tmp/deploy/images/$MACHINE
 WIC=$(readlink -f "$DEPLOY/$IMAGE-$MACHINE.rootfs.wic")

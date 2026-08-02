@@ -26,7 +26,7 @@ WilhelmOS is positioned as COTS software under ED-109A Section 12.4. The system 
 
 ## User Experience
 
-WilhelmOS is organized into **profiles** — named platform compositions (image + session machinery + application contract), see docs/DESIGN.md §10. Two are implemented (the boot modes below); a third, the **SPA profile** (fullscreen closed-environment web app via Cog/WPE WebKit, `wilhelmos-image-spa`), is designed but not yet built. **Option 2 is the primary mode** — it runs the sky_guard_client situation display, which is the core product.
+WilhelmOS is organized into **profiles** — named platform compositions (image + session machinery + application contract), see docs/DESIGN.md §10: **services** (TTY, Option 1 below), **kiosk** (native GL, Option 2 below), and **spa** (fullscreen closed-environment web app via Cog/WPE WebKit, `wilhelmos-image-spa`, built with `kas/spa.yaml` on top of the hw overlay; contracts in docs/SPA-CONTRACT.md, engine reference in docs/WEBKIT.md). **Option 2 is the primary mode** — it runs the sky_guard_client situation display, which is the core product.
 
 ### Option 1 — TTY mode (server / maintenance)
 - Boot → systemd → auto-login → TUI on framebuffer console
@@ -55,7 +55,7 @@ WilhelmOS is organized into **profiles** — named platform compositions (image 
 - **Upstream repos:** openembedded-core (meta) + bitbake + meta-yocto (meta-poky, meta-yocto-bsp) + meta-openembedded (meta-oe) — Yocto 5.3+ has no poky combined repo; all pinned to exact commit SHAs in `kas/qemu-wrynose.yaml` (update pins via `git ls-remote`)
 - **Custom layer:** `meta-wilhelmos/` (priority 6)
 - **All build state lives outside the repo** in `KAS_WORK_DIR` (default `../wilhelmos-build`, exported by the Makefile): upstream layer clones, `build/`, `downloads/`, `sstate-cache/`. The checkout contains only WilhelmOS sources. When running `kas` directly (not via `make`), export `KAS_WORK_DIR` first — otherwise kas clones/builds into the current directory
-- **kas overlays** (compose with `:`): `kas/debug.yaml` (verbose-boot wks), `kas/hw.yaml` (MACHINE=genericx86-64, USB-bootable kiosk for bare metal — adds Intel GPU firmware + i915/xe/amdgpu modules via gpu.cfg)
+- **kas overlays** (compose with `:`): `kas/debug.yaml` (verbose-boot wks), `kas/hw.yaml` (MACHINE=genericx86-64, USB-bootable kiosk for bare metal — adds Intel GPU firmware + i915/xe/amdgpu modules via gpu.cfg), `kas/spa.yaml` (SPA profile — adds the pinned meta-webkit layer, target wilhelmos-image-spa; compose last)
 - **Flashing the install stick** (after a `kas/hw.yaml` build): `sudo sh scripts/reflash-stick.sh /dev/sdX` — flashes the built kiosk image, recreates the `wicstore` partition (image + sha256 for `wilhelmos-install`), and verifies the flashed rootfs against the build tree. Always use it instead of hand-assembling dd/parted steps
 - **Graphical QEMU:** `runqemu wilhelmos-image-kiosk kvm sdl slirp serialstdio` inside `kas shell` (kas passes DISPLAY/XAUTHORITY through via the `env:` block); add `wic ovmf` to boot the real UEFI/systemd-boot chain; add `gl` for virgl acceleration
 

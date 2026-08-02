@@ -1,0 +1,49 @@
+[Unit]
+Description=Cage Wayland SPA kiosk session (Cog/WPE WebKit)
+Requires=seatd.service
+After=seatd.service systemd-user-sessions.service getty@tty1.service
+Conflicts=getty@tty1.service
+ConditionPathExists=/dev/tty1
+Before=graphical.target
+
+[Service]
+User=kiosk
+Group=kiosk
+SupplementaryGroups=video input render seat
+Environment=LIBSEAT_BACKEND=seatd
+Environment=XDG_RUNTIME_DIR=/run/cage
+# Only takes effect when no hardware GL device exists (SimpleDRM fallback):
+# lets wlroots use llvmpipe instead of refusing to start a GL renderer.
+Environment=WLR_RENDERER_ALLOW_SOFTWARE=1
+RuntimeDirectory=cage
+RuntimeDirectoryMode=0700
+TTYPath=/dev/tty1
+StandardInput=tty-fail
+StandardOutput=journal
+StandardError=journal
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+UtmpIdentifier=tty1
+# seatd.service is Type=simple, so After= does not imply its socket exists
+# yet; gate on actual readiness (up to 5s) to avoid a first-boot restart.
+ExecStartPre=/bin/sh -c 'n=0; while [ ! -S /run/seatd.sock ] && [ $n -lt 50 ]; do sleep 0.1; n=$((n+1)); done'
+# The native GPU driver (i915/xe/amdgpu) is a module and can bind long
+# after SimpleDRM registers the firmware framebuffer. SimpleDRM has no
+# render node, so starting cage against it wedges the session in software
+# rendering with no client GL. Wait up to 60s for a render node (only
+# native drivers create one), then proceed anyway so the
+# SimpleDRM/llvmpipe fallback still boots on unsupported GPUs.
+ExecStartPre=/bin/sh -c 'n=0; while ! ls /dev/dri/renderD* >/dev/null 2>&1 && [ $n -lt 600 ]; do sleep 0.1; n=$((n+1)); done'
+# Stable exec chain (§10): the launcher script resolves the SPA URL
+# (bundled web root by default, WILHELMOS_SPA_URL drop-in override) and
+# execs Cog; the session never names a specific application bundle.
+ExecStart=/usr/bin/cage -ds -- /usr/libexec/wilhelmos-spa-launch
+# Same restart semantics as cage-kiosk.service (see its comments): only
+# an administrative stop may keep the display down.
+Restart=always
+RestartSec=2
+TimeoutStopSec=10
+
+[Install]
+WantedBy=graphical.target

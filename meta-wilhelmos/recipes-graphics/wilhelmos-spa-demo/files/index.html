@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WilhelmOS SPA reference application</title>
+<style>
+  /* Self-contained by design: no external resources, no ES modules —
+     must render from file:// (the bundled-web-root reference model). */
+  html, body { margin: 0; height: 100%; background: #0b0f14; color: #c9d4e0;
+               font-family: monospace; overflow: hidden; }
+  #wrap { display: flex; flex-direction: column; height: 100%;
+          align-items: center; justify-content: center; gap: 1.5rem; }
+  h1 { font-size: 1.4rem; font-weight: normal; letter-spacing: 0.15em;
+       color: #7fb4d8; margin: 0; }
+  canvas { background: #060a0e; border: 1px solid #1d2833; }
+  #status { font-size: 0.85rem; color: #6b7a89; text-align: center;
+            line-height: 1.6; }
+  #clock { font-size: 2.2rem; color: #d8e6f2; letter-spacing: 0.08em; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1>WILHELMOS &mdash; SPA PROFILE REFERENCE</h1>
+  <div id="clock">--:--:--</div>
+  <canvas id="scope" width="360" height="360"></canvas>
+  <div id="status">loading&hellip;</div>
+</div>
+<script>
+"use strict";
+// Canvas render loop: proves JS + 2D canvas + requestAnimationFrame in
+// the closed WPE environment. Radar-sweep styling is cosmetic.
+var canvas = document.getElementById("scope");
+var ctx = canvas.getContext("2d");
+var cx = canvas.width / 2, cy = canvas.height / 2, R = 160;
+var start = performance.now();
+var frames = 0, fps = 0, fpsAt = start;
+
+function draw(now) {
+  frames++;
+  if (now - fpsAt > 1000) { fps = frames; frames = 0; fpsAt = now; }
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = "#1d3a4d";
+  for (var r = R / 4; r <= R; r += R / 4) {
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy);
+  ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R);
+  ctx.stroke();
+  var a = ((now - start) / 2000) * Math.PI;
+  var grad = ctx.createLinearGradient(cx, cy,
+      cx + R * Math.cos(a), cy + R * Math.sin(a));
+  grad.addColorStop(0, "rgba(90,180,120,0)");
+  grad.addColorStop(1, "rgba(90,180,120,0.8)");
+  ctx.strokeStyle = grad; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + R * Math.cos(a), cy + R * Math.sin(a)); ctx.stroke();
+  ctx.lineWidth = 1;
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+function tick() {
+  var d = new Date();
+  function p(n) { return (n < 10 ? "0" : "") + n; }
+  document.getElementById("clock").textContent =
+      p(d.getUTCHours()) + ":" + p(d.getUTCMinutes()) + ":" +
+      p(d.getUTCSeconds()) + " UTC";
+  document.getElementById("status").textContent =
+      "viewport " + window.innerWidth + "×" + window.innerHeight +
+      " @ dpr " + window.devicePixelRatio +
+      " • " + fps + " fps • " + location.protocol + "//";
+}
+setInterval(tick, 250);
+tick();
+</script>
+</body>
+</html>
