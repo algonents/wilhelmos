@@ -22,6 +22,17 @@ The session stack: `systemd → cage-spa.service → cage → cog → WPEWebKit
 `wilhelmos-spa-launch` (`WILHELMOS_SPA_URL`, `WILHELMOS_UI_SCALE` →
 `--device-scale`).
 
+**URL configuration layers.** (1) Build time: the `WILHELMOS_SPA_URL`
+bitbake variable bakes a drop-in into the image (fleet deployments).
+(2) Runtime, operator (tty2): `sudo wilhelmos-spa-url set <url>` /
+`show` / `clear` — writes `/etc/systemd/system/cage-spa.service.d/`
+`50-operator-url.conf`, which overrides the image drop-in by systemd
+precedence, and restarts the session. (3) Future: a field in the
+planned tty2 diagnostics TUI, backed by the same tool. Note for the
+Phase 2 read-only-rootfs design: the operator override relies on a
+writable `/etc` — the mechanism must move to whatever writable-config
+location that design chooses.
+
 ## PACKAGECONFIG policy (the bbappend, with reasons)
 
 - **Removed `mediasource mediastream webaudio`** — the heavy GStreamer

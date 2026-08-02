@@ -809,7 +809,7 @@ planned:
 |---|---|---|---|---|
 | **services** | wilhelmos-image-base | getty/TUI; systemd services | §5 patterns | native daemons |
 | **kiosk** | wilhelmos-image-kiosk | cage on tty1, getty on tty2 | kiosk-app ([KIOSK-CONTRACT.md](KIOSK-CONTRACT.md)) | native GL application |
-| **spa** *(planned)* | wilhelmos-image-spa | same cage session pattern | spa-app (future SPA-CONTRACT.md) | Cog → WPE WebKit |
+| **spa** | wilhelmos-image-spa | same cage session pattern (cage-spa) | spa-app / URL ([SPA-CONTRACT.md](SPA-CONTRACT.md)) | Cog → WPE WebKit ([WEBKIT.md](WEBKIT.md)) |
 
 All profiles share the base image, boot chain, user model, journald
 policy, tty2 maintenance console, and (for CWP-class profiles) the
@@ -893,17 +893,32 @@ any engine).
 
 **Phasing:**
 
-- **Phase A (this section):** concept + decision record.
-- **Phase B — prototype:** pin `meta-webkit`, build cog + wpewebkit
-  under cage in QEMU, load a sample SPA, verify the sandbox/userns
-  kernel requirements, resolve the open questions above.
-- **Phase C — contract machinery:** `spa-app.bbclass`,
-  `wilhelmos-image-spa`, `wilhelmos-spa-session`, a reference SPA
-  (the `wilhelmos-kiosk-demo` analog), `docs/SPA-CONTRACT.md`.
-- **Phase D — closure:** production hardening of the
-  closed-environment requirements; certification notes recording the
-  per-profile COTS surface (browser engine vs native stack) so
-  integrators can choose profile per AL with eyes open.
+- **Phase A — concept + decision record:** DONE 2026-08-01 (this
+  section).
+- **Phases B+C (merged by decision 2026-08-02) — machinery, built
+  first-class and hardware-validated the same day:** `spa-app.bbclass`,
+  `wilhelmos-spa-session` (+ the `wilhelmos-spa-url` operator tool),
+  `wilhelmos-image-spa`, the reference SPA, `kas/spa.yaml`,
+  [SPA-CONTRACT.md](SPA-CONTRACT.md) and [WEBKIT.md](WEBKIT.md).
+  Validated on the GMKtec (amdgpu, hardware GL). **Amendments made
+  along the way:** the URL model was promoted to *primary* (bundled =
+  secondary/out-of-box default); media-off became media-minimal (WPE
+  2.52 cannot build `ENABLE_VIDEO=OFF` — GStreamer core+base is the
+  engine's floor). **Key findings** (detail in WEBKIT.md): the
+  bubblewrap sandbox engages by default on real hardware and fails
+  closed — meta-webkit omits the runtime helpers, fixed via RDEPENDS
+  in our bbappend; QEMU cannot validate WPE pixels or the sandbox
+  (no EGL/dmabuf path in software GL, degraded path skips sandboxing);
+  `file://` serving works for self-contained bundles; rootfs delta
+  +306 MB vs the native kiosk image.
+- **Phase D — closure (remaining):** origin allowlist,
+  remote-inspector removal, feature-switch hardening; on-hardware
+  namespace verification of the sandbox as recorded evidence;
+  connection-fallback page for the URL model; relocate the operator
+  URL override off `/etc` when the Phase 2 read-only-rootfs design
+  lands; optional `reduce-size` build; report the bubblewrap RDEPENDS
+  bug upstream to meta-webkit; per-profile COTS-surface certification
+  notes.
 
 ## 11. Base OS: why Linux (decision record, 2026-08-02)
 

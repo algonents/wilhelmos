@@ -11,6 +11,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 SRC_URI = " \
     file://cage-spa.service \
     file://wilhelmos-spa-launch \
+    file://wilhelmos-spa-url \
 "
 
 S = "${UNPACKDIR}"
@@ -41,6 +42,10 @@ do_install() {
         ${D}${systemd_system_unitdir}/cage-spa.service
     install -Dm0755 ${UNPACKDIR}/wilhelmos-spa-launch \
         ${D}${libexecdir}/wilhelmos-spa-launch
+
+    # Operator tool (tty2): runtime URL override via /etc drop-in
+    install -Dm0755 ${UNPACKDIR}/wilhelmos-spa-url \
+        ${D}${bindir}/wilhelmos-spa-url
 
     # Maintenance shell stays on tty2 (DESIGN.md) - enable it explicitly
     install -d ${D}${sysconfdir}/systemd/system/getty.target.wants

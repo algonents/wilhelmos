@@ -73,15 +73,13 @@ Used for sky_guard_server (headless, no GPU) or system maintenance access.
 - [x] Keep login shell on tty2 (`Alt+F2`) for maintenance access when running kiosk mode (getty@tty2 enabled by wilhelmos-kiosk-session)
 - [ ] Diagnostics TUI on tty2 (kiosk mode): first-class operator surface showing essential diagnostics at a glance (service health, GPU/display state, network, recent faults) without requiring shell commands — tty2 is as important as the kiosk app itself, not merely maintenance access; depends on the deterministic console font fix (fbcon TER16x32) and pairs with the `video=` per-deployment resolution knob
 
-### SPA profile (planned — decision record in DESIGN.md §10)
+### SPA profile (implemented — decision record + findings in DESIGN.md §10)
 
 Fullscreen closed-environment web app (Cog → WPE WebKit under cage) for
-integrators deploying single-page apps instead of native GL. Engine,
-delivery model, and media default decided 2026-08-01; implementation phased:
+integrators deploying single-page apps instead of native GL.
 
-- [ ] Phase B — prototype: pin meta-webkit (wrynose branch), build cog + wpewebkit under cage in QEMU, load a sample SPA; verify web-process sandbox (bubblewrap/user-namespace kernel config); resolve bundled-SPA serving (`file://` vs custom URI scheme vs localhost server) and the web-app config-injection analog of the env-var drop-in
-- [ ] Phase C — contract machinery: `spa-app.bbclass`, `wilhelmos-image-spa`, `wilhelmos-spa-session`, reference SPA (wilhelmos-kiosk-demo analog), `docs/SPA-CONTRACT.md`
-- [ ] Phase D — closure: enforce the closed-environment requirements in production images (origin allowlist, inspector off, feature switches); certification notes on the per-profile COTS surface (browser engine vs native stack)
+- [x] Phases B+C (merged 2026-08-02): full machinery — spa-app.bbclass, wilhelmos-spa-session (+ wilhelmos-spa-url operator tool), wilhelmos-image-spa, reference SPA, kas/spa.yaml, SPA-CONTRACT.md, WEBKIT.md — hardware-validated on the GMKtec (branch feat/wpe-profile)
+- [ ] Phase D — closure: origin allowlist; remove remote-inspector; feature-switch hardening; verify web-process sandbox namespaces on hardware (recorded evidence); connection-fallback page for the URL model; relocate the operator URL override off /etc when Phase 2 read-only rootfs lands; optional reduce-size build; report bubblewrap-RDEPENDS bug upstream to meta-webkit; per-profile COTS-surface certification notes
 
 ---
 
